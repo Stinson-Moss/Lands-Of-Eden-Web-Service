@@ -11,7 +11,7 @@ app.use(express.json());
 
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI || '';
+const REDIRECT_URI = process.env.REDIRECT_URI || 'http://localhost:3000/verify';
 
 app.post('/api/discord/token', async (req, res) => {
   try {

@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const DISCORD_CLIENT_ID = process.env.REACT_APP_DISCORD_CLIENT_ID;
-const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI || 'http://localhost:3000/verify';
+const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI || 'placeholder';
 const DISCORD_OAUTH_URL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=identify%20guilds.join`;
 
 console.log(DISCORD_CLIENT_ID);
