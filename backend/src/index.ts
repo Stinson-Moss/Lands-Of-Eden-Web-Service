@@ -11,7 +11,10 @@ const REDIRECT_URI: string = process.env.REDIRECT_URI || '';
 
 const app = express();
 app.use(cors({
-  origin: REDIRECT_URI,
+  origin: function(origin, callback) {
+    if (!origin) callback(null, true);
+    else callback(new Error('Not allowed by CORS'));
+  },
   methods: ['POST']
 }));
 app.use(express.json());
