@@ -5,13 +5,17 @@ import axios from 'axios';
 
 dotenv.config();
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 const REDIRECT_URI: string = process.env.REDIRECT_URI || '';
+
+const app = express();
+app.use(cors({
+  origin: REDIRECT_URI,
+  methods: ['POST']
+}));
+app.use(express.json());
+
 
 app.post('/api/discord/token', async (req, res) => {
   try {
