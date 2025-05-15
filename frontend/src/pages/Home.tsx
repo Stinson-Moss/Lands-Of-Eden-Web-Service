@@ -3,6 +3,8 @@ import './Home.css';
 import logo from '../assets/logo.png';
 import AccountsWidget from '../components/AccountsWidget.tsx';
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_LINK || '';
+
 interface UserData {
   discord?: {
     username: string;
@@ -22,22 +24,34 @@ const Home: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadUserData = () => {
-      try {
-        const storedData = localStorage.getItem('userData');
-        if (storedData) {
-          const parsedData = JSON.parse(storedData);
-          setUserData(parsedData);
-        }
-      } catch (err) {
-        console.error('Error loading user data from localStorage:', err);
-        setError('Failed to load user data');
-      } finally {
-        setLoading(false);
-      }
-    };
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
 
-    loadUserData();
+    if (code) {
+      // Exchange code with backend
+      fetch(`${BACKEND_URL}/api/discord/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          setUserData(data.user);
+          localStorage.setItem('userData', JSON.stringify(data.user));
+          setLoading(false);
+        })
+        .catch(() => {
+          setError('Failed to verify account.');
+          setLoading(false);
+        });
+    } else {
+      // No code: check localStorage
+      const stored = localStorage.getItem('userData');
+      if (stored) {
+        setUserData(JSON.parse(stored));
+      }
+      setLoading(false);
+    }
   }, []);
 
   if (loading) {
