@@ -31,16 +31,7 @@ const Home: React.FC = () => {
 
     if (code) {
 
-      const provider = urlParams.get('provider');
-
-      if (!provider) {
-        setError('No provider found.');
-        setLoading(false);
-        return;
-      }
-
-      
-      fetch(`${BACKEND_URL}/api/${provider}/token`, {
+      fetch(`${BACKEND_URL}/api/discord/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),
@@ -48,7 +39,7 @@ const Home: React.FC = () => {
         .then(res => res.json())
         .then(data => {
           const existing = JSON.parse(localStorage.getItem('userData') || '{}');
-          existing[provider] = data.user;
+          existing.discord = data.user;
 
           localStorage.setItem('userData', JSON.stringify(existing));
           setUserData(existing);
