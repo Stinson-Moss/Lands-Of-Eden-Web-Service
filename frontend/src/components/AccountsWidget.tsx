@@ -20,8 +20,9 @@ interface AccountsWidgetProps {
   userData: UserData | null;
   error?: string | null;
 }
-const BACKEND_URL: string = process.env.REACT_APP_BACKEND_LINK || '';
+
 const DISCORD_OAUTH = process.env.REACT_APP_DISCORD_OAUTH || '';
+const ROBLOX_OAUTH = process.env.REACT_APP_ROBLOX_OAUTH || '';
 
 function discordAvatarUrl(avatarHash: string, userId: string) {
   return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.png`;
@@ -32,7 +33,7 @@ const handleDiscordConnect = () => {
 };
 
 const handleRobloxConnect = () => {
-  window.location.href = `${BACKEND_URL}/api/roblox/auth`;
+  window.location.href = ROBLOX_OAUTH;
 };
 
 const AccountsWidget: React.FC<AccountsWidgetProps> = ({ userData, error }) => {

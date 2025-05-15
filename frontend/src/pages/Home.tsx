@@ -10,11 +10,13 @@ interface UserData {
     username: string;
     discriminator: string;
     avatar: string;
+    id: string;
   };
   roblox?: {
     username: string;
     displayName: string;
     avatar: string;
+    id: string;
   };
 }
 
@@ -28,21 +30,28 @@ const Home: React.FC = () => {
     const code = urlParams.get('code');
 
     if (code) {
-      // Exchange code with backend
-      fetch(`${BACKEND_URL}/api/discord/token`, {
+
+      const provider = urlParams.get('provider');
+
+      if (!provider) {
+        setError('No provider found.');
+        setLoading(false);
+        return;
+      }
+
+      
+      fetch(`${BACKEND_URL}/api/${provider}/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),
       })
         .then(res => res.json())
         .then(data => {
-          // Get the existing userData or start with an empty object
           const existing = JSON.parse(localStorage.getItem('userData') || '{}');
-          // Update only the discord field
-          const updated = { ...existing, discord: data.user };
-          // Save back to localStorage and state
-          localStorage.setItem('userData', JSON.stringify(updated));
-          setUserData(updated);
+          existing[provider] = data.user;
+
+          localStorage.setItem('userData', JSON.stringify(existing));
+          setUserData(existing);
           setLoading(false);
         })
         .catch(() => {
