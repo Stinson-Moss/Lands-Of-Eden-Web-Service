@@ -39,6 +39,7 @@ const Home: React.FC = () => {
           setUserData(data.user);
           localStorage.setItem('userData', JSON.stringify(data.user));
           setLoading(false);
+          console.log("Caught user data:", data.user);
         })
         .catch(() => {
           setError('Failed to verify account.');
