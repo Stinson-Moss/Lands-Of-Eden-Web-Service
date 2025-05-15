@@ -6,11 +6,13 @@ interface UserData {
     username: string;
     discriminator: string;
     avatar: string;
+    id: string;
   };
   roblox?: {
     username: string;
     displayName: string;
     avatar: string;
+    id: string;
   };
 }
 
@@ -20,6 +22,10 @@ interface AccountsWidgetProps {
 }
 const BACKEND_URL: string = process.env.REACT_APP_BACKEND_LINK || '';
 const DISCORD_OAUTH = process.env.REACT_APP_DISCORD_OAUTH || '';
+
+function discordAvatarUrl(avatarHash: string, userId: string) {
+  return `https://cdn.discordapp.com/avatars/${userId}/${avatarHash}.png`;
+}
 
 const handleDiscordConnect = () => {
   window.location.href = DISCORD_OAUTH;
@@ -51,13 +57,13 @@ const AccountsWidget: React.FC<AccountsWidgetProps> = ({ userData, error }) => {
             {userData?.discord ? (
               <div className="accountHeader">
                 <img
-                  src={userData.discord.avatar}
+                  src={discordAvatarUrl(userData.discord.avatar, userData.discord.id)}
                   alt="Discord Avatar"
                   className="avatar"
                 />
                 <div className="accountInfo">
                   <h3>Discord</h3>
-                  <p>{userData.discord.username}#{userData.discord.discriminator}</p>
+                  <p>{userData.discord.username}</p>
                 </div>
               </div>
             ) : (
