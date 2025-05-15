@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import axios from 'axios';
-import { REFUSED } from 'dns';
 
 dotenv.config();
 
@@ -10,16 +9,10 @@ const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 const REDIRECT_URI: string = process.env.REDIRECT_URI || '';
 
-const allowedOrigins = [
-  process.env.REDIRECT_URI
-]
-
 const app = express();
 app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) callback(null, true);
-    else callback(new Error('Not allowed by CORS'));
-  },
+  origin: REDIRECT_URI,
+  allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ['POST']
 }));
 app.use(express.json());
