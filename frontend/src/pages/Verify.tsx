@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './Verify.css';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const DISCORD_CLIENT_ID = process.env.REACT_APP_DISCORD_CLIENT_ID;
 const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI || 'http://localhost:3000/verify';
