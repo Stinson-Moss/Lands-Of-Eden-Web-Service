@@ -19,6 +19,7 @@ app.use(express.json());
 
 app.post('/api/discord/token', async (req, res) => {
   try {
+    console.log("Received Discord token request");
     const { code } = req.body;
     
     const tokenResponse = await axios.post('https://discord.com/api/oauth2/token', 
@@ -35,6 +36,8 @@ app.post('/api/discord/token', async (req, res) => {
       }
     );
 
+    console.log("Token response:", tokenResponse.data);
+
     const { access_token } = tokenResponse.data;
 
     // Get user info
@@ -43,6 +46,8 @@ app.post('/api/discord/token', async (req, res) => {
         Authorization: `Bearer ${access_token}`,
       },
     });
+
+    console.log("User response:", userResponse.data);
 
     res.json({
       user: userResponse.data,
