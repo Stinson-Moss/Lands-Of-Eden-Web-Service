@@ -18,14 +18,11 @@ interface AccountsWidgetProps {
   userData: UserData | null;
   error?: string | null;
 }
-
-const DISCORD_CLIENT_ID = process.env.REACT_APP_DISCORD_CLIENT_ID;
-const REDIRECT_URI: string = process.env.REACT_APP_REDIRECT_URI || '';
 const BACKEND_URL: string = process.env.REACT_APP_BACKEND_LINK || '';
-const DISCORD_OAUTH_URL = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=identify%20guilds.join`;
+const DISCORD_OAUTH = process.env.REACT_APP_DISCORD_OAUTH || '';
 
 const handleDiscordConnect = () => {
-  window.location.href = DISCORD_OAUTH_URL;
+  window.location.href = DISCORD_OAUTH;
 };
 
 const handleRobloxConnect = () => {
