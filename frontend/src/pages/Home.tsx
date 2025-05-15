@@ -36,10 +36,14 @@ const Home: React.FC = () => {
       })
         .then(res => res.json())
         .then(data => {
-          setUserData(data.user);
-          localStorage.setItem('userData', JSON.stringify(data.user));
+          // Get the existing userData or start with an empty object
+          const existing = JSON.parse(localStorage.getItem('userData') || '{}');
+          // Update only the discord field
+          const updated = { ...existing, discord: data.user };
+          // Save back to localStorage and state
+          localStorage.setItem('userData', JSON.stringify(updated));
+          setUserData(updated);
           setLoading(false);
-          console.log("Caught user data:", data.user);
         })
         .catch(() => {
           setError('Failed to verify account.');
