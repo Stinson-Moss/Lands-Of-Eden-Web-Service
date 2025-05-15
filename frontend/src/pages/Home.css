@@ -1,0 +1,162 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: calc(100vh - 64px);
+  background-color: #1a1a1a;
+  color: #ffffff;
+}
+
+.mainContent {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 3rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 3rem;
+}
+
+.welcomeSection {
+  flex: 1 1 0;
+  max-width: 420px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+}
+
+.homeLogo {
+  width: 100px;
+  display: flex;
+  height: auto;
+  margin-bottom: 1.5rem;
+}
+
+.accountsWidget {
+  flex: 1 1 0;
+  max-width: 400px;
+  min-width: 320px;
+  background: #232323;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .mainContent {
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    padding-top: 2rem;
+  }
+  .welcomeSection, .accountsWidget {
+    max-width: 100%;
+    width: 100%;
+    align-items: center;
+    text-align: center;
+  }
+  .logo {
+    margin-bottom: 1rem;
+  }
+}
+
+.homeLogo {
+  width: 400px;
+  height: auto;
+  margin-bottom: 2rem;
+}
+
+.description {
+  color: #cccccc;
+  font-size: 1.2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.loading, .error {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-top: 2rem;
+}
+
+.error {
+  color: #ff6b6b;
+}
+
+.accounts {
+  margin-top: 2rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.accountSection {
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.accountSection h2 {
+  color: #f0e6d2;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.account {
+  background-color: #333333;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* Discord hover */
+.account.discord:hover {
+  background: #5865F2;
+}
+.account.discord:hover .accountInfo h3,
+.account.discord:hover .accountInfo p {
+  color: #fff;
+}
+
+/* Roblox hover */
+.account.roblox:hover {
+  background: #E1E6E8;
+}
+.account.roblox:hover .accountInfo h3,
+.account.roblox:hover .accountInfo p {
+  color: #111;
+}
+
+.accountHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.accountInfo h3 {
+  color: #f0e6d2;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.accountInfo p {
+  margin: 0.25rem 0 0;
+  color: #cccccc;
+  font-size: 0.9rem;
+} 
