@@ -15,12 +15,10 @@ const app = express();
 app.use(cors({
   origin: REDIRECT_URI,
   allowedHeaders: ['Content-Type', 'Authorization'],
-  methods: ['POST']
+  methods: ['POST'],
+  credentials: true,
 }));
 app.use(express.json());
-
-const expiresTimes: { [key: string]: number } = {};
-
 
 app.post('/api/discord/token', async (req, res) => {
   try {
