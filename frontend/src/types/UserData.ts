@@ -7,7 +7,7 @@ export interface UserDataTemplate {
     };
     roblox: {
         username: string;
-        displayName: string;
+        displayname: string;
         picture: string;
         id: string;
     };

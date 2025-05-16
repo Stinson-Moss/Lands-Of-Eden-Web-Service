@@ -80,7 +80,7 @@ const AccountsWidget: React.FC<AccountsWidgetProps> = ({ userData, error }) => {
                 />
                 <div className="accountInfo">
                   <h3>Roblox</h3>
-                  <p>{userData.roblox.displayName} (@{userData.roblox.username})</p>
+                  <p>{userData.roblox.displayname} (@{userData.roblox.username})</p>
                 </div>
               </div>
             ) : (

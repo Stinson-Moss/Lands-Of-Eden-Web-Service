@@ -86,8 +86,14 @@ app.post('/api/roblox/token', async (req, res) => {
       },
     });
 
+    const newFormat = {
+      username: userResponse.data.preferred_username,
+      displayname: userResponse.data.name,
+      picture: userResponse.data.picture,
+      id: userResponse.data.sub,
+    }
     res.json({
-      user: userResponse.data,
+      user: newFormat,
       access_token: access_token,
       refresh_token: refresh_token,
     });
