@@ -1,27 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import './Home.css';
 import logo from '../assets/logo.png';
-import AccountsWidget from '../components/AccountsWidget.tsx';
+import AccountsWidget from '../components/AccountsWidget';
+import { UserDataTemplate } from '../types/UserData';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_LINK || '';
 
-interface UserData {
-  discord?: {
-    username: string;
-    discriminator: string;
-    avatar: string;
-    id: string;
-  };
-  roblox?: {
-    username: string;
-    displayName: string;
-    avatar: string;
-    id: string;
-  };
-}
-
 const Home: React.FC = () => {
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const [userData, setUserData] = useState<UserDataTemplate | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,6 +50,8 @@ const Home: React.FC = () => {
       }
       setLoading(false);
     }
+
+    window.history.replaceState({}, document.title, window.location.pathname);
   }, []);
 
   if (loading) {

@@ -1,23 +1,9 @@
 import React from 'react';
 import './AccountsWidget.css';
-
-interface UserData {
-  discord?: {
-    username: string;
-    discriminator: string;
-    avatar: string;
-    id: string;
-  };
-  roblox?: {
-    username: string;
-    displayName: string;
-    avatar: string;
-    id: string;
-  };
-}
+import { UserDataTemplate } from '../types/UserData';
 
 interface AccountsWidgetProps {
-  userData: UserData | null;
+  userData: UserDataTemplate | null;
   error?: string | null;
 }
 
@@ -88,7 +74,7 @@ const AccountsWidget: React.FC<AccountsWidgetProps> = ({ userData, error }) => {
             {userData?.roblox ? (
               <div className="accountHeader">
                 <img
-                  src={userData.roblox.avatar}
+                  src={userData.roblox.picture}
                   alt="Roblox Avatar"
                   className="avatar"
                 />

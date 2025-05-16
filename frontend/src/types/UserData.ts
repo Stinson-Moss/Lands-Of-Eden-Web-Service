@@ -1,0 +1,14 @@
+export interface UserDataTemplate {
+    discord: {
+        username: string;
+        discriminator: string;
+        avatar: string;
+        id: string;
+    };
+    roblox: {
+        username: string;
+        displayName: string;
+        picture: string;
+        id: string;
+    };
+}

@@ -7,6 +7,8 @@ dotenv.config();
 
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
 const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
+const ROBLOX_CLIENT_ID = process.env.ROBLOX_CLIENT_ID;
+const ROBLOX_CLIENT_SECRET = process.env.ROBLOX_CLIENT_SECRET;
 const REDIRECT_URI: string = process.env.REDIRECT_URI || '';
 
 const app = express();
@@ -17,10 +19,11 @@ app.use(cors({
 }));
 app.use(express.json());
 
+const expiresTimes: { [key: string]: number } = {};
+
 
 app.post('/api/discord/token', async (req, res) => {
   try {
-    console.log("Received Discord token request");
     const { code } = req.body;
     
     const tokenResponse = await axios.post('https://discord.com/api/oauth2/token', 
@@ -37,8 +40,6 @@ app.post('/api/discord/token', async (req, res) => {
       }
     );
 
-    console.log("Token response:", tokenResponse.data);
-
     const { access_token } = tokenResponse.data;
 
     // Get user info
@@ -47,8 +48,6 @@ app.post('/api/discord/token', async (req, res) => {
         Authorization: `Bearer ${access_token}`,
       },
     });
-
-    console.log("User response:", userResponse.data);
 
     res.json({
       user: userResponse.data,
@@ -63,9 +62,39 @@ app.post('/api/discord/token', async (req, res) => {
 app.post('/api/roblox/token', async (req, res) => {
   try {
     const { code } = req.body;
+
+    if (!code) {
+      return res.status(400).json({ error: 'No code provided' });
+    }
+
+    const tokenResponse = await axios.post('https://apis.roblox.com/oauth/v1/token', {
+      client_id: ROBLOX_CLIENT_ID,
+      client_secret: ROBLOX_CLIENT_SECRET,
+      grant_type: 'authorization_code',
+      code: code,
+    }, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+
+    const { access_token, refresh_token, expires_in } = tokenResponse.data;
+
+    const userResponse = await axios.get('https://apis.roblox.com/oauth/v1/userinfo', {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+    });
+
+    res.json({
+      user: userResponse.data,
+      access_token: access_token,
+      refresh_token: refresh_token,
+    });
     
   } catch (error) {
-    
+    console.error('Token exchange error:', error);
+    res.status(500).json({ error: 'Failed to exchange token' });
   }
 });
 const PORT = process.env.PORT || 3001;
