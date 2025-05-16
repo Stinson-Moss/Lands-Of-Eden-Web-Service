@@ -24,6 +24,8 @@ const Home: React.FC = () => {
         return;
       }
 
+      window.history.replaceState({}, document.title, window.location.pathname);
+
       fetch(`${BACKEND_URL}/api/${provider}/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -50,8 +52,6 @@ const Home: React.FC = () => {
       }
       setLoading(false);
     }
-
-    window.history.replaceState({}, document.title, window.location.pathname);
   }, []);
 
   if (loading) {
