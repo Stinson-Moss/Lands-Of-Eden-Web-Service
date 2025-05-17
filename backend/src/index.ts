@@ -24,6 +24,7 @@ const pool = mysql.createPool({
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
+  port: parseInt(process.env.DB_PORT || '3306'),
 
   ssl: {
     ca: fs.readFileSync(process.env.DB_CA || ''),
