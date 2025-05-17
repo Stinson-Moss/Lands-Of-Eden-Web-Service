@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './AccountsWidget.css';
 import { User } from '../types/Session';
+import NegativeConfirmationDialog from './NegativeConfirmationDialog';
 
 interface AccountsWidgetProps {
   user: User | null;
@@ -36,7 +37,7 @@ const AccountsWidget: React.FC<AccountsWidgetProps> = ({ user, setUser }) => {
           if (!user) {
             return;
           }
-          
+
           setUser({
             discord: user.discord,
             roblox: null
@@ -55,20 +56,16 @@ const AccountsWidget: React.FC<AccountsWidgetProps> = ({ user, setUser }) => {
     setShowConfirmation(false);
   };
 
+  const cardInfo = {
+    title: 'Unlink Account',
+    question: 'Are you sure you want to unlink your Roblox account?',
+    confirmButtonText: 'Unlink',
+    cancelButtonText: 'Cancel',
+  };
+
   return (
     <div className="accountsWidget">
-      {showConfirmation && (
-        <div className="confirmationOverlay">
-          <div className="confirmationDialog">
-            <h3>Unlink Account</h3>
-            <p>Are you sure you want to unlink your Roblox account?</p>
-            <div className="confirmationButtons">
-              <button className="cancelButton" onClick={handleCancelUnlink}>Cancel</button>
-              <button className="confirmButton" onClick={handleUnlink}>Unlink</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {showConfirmation && <NegativeConfirmationDialog cardInfo={cardInfo} onConfirm={handleUnlink} onCancel={handleCancelUnlink} />}
       <div className="accountSection">
         <h2>Link Your Roblox Account</h2>
           <div
