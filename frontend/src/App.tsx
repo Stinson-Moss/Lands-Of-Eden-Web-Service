@@ -11,7 +11,26 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   
   useEffect(() => {
-    if (session) {
+    const code = new URLSearchParams(window.location.search).get('code');
+    if (code) {
+      window.history.replaceState({}, '', window.location.pathname);
+      
+      fetch(`${BACKEND_URL}/auth/getUser`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code }),
+      })
+      .then(res => res.json())
+      .then(data => {
+        setSession(data.session);
+        setUser(data.user);
+      })
+      .catch(() => {
+        setSession(null);
+        setUser(null);
+      });
+
+    } else if (session) {
       const token = session.token;
       const refreshToken = session.refreshToken;
       const expiresIn = session.expiresIn;
