@@ -141,13 +141,13 @@ app.post('/auth/getUser', async (req, res) => {
         }
       );
 
-      const { discord_access_token, discord_refresh_token, discord_expires_in } = tokenResponse.data;
+      const { access_token, refresh_token, expires_in } = tokenResponse.data;
       const sessionData = generateSessionData()
 
       // Get user info
       const userResponse = await axios.get('https://discord.com/api/users/@me', {
         headers: {
-          Authorization: `Bearer ${discord_access_token}`,
+          Authorization: `Bearer ${access_token}`,
         },
       });
       
@@ -162,10 +162,10 @@ app.post('/auth/getUser', async (req, res) => {
         userResponse.data.id, 
         sessionData.token, 
         sessionData.refreshToken, 
-        discord_access_token, 
-        discord_refresh_token, 
+        access_token, 
+        refresh_token, 
         Date.now() + SESSION_EXPIRATION,
-        discord_expires_in, 
+        expires_in, 
         null,
         null,
         null,
