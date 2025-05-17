@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import axios from 'axios';
 import mysql from 'mysql2/promise';
 import crypto from 'crypto';
-
+import fs from 'fs';
 dotenv.config();
 
 const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
@@ -26,7 +26,7 @@ const pool = mysql.createPool({
   keepAliveInitialDelay: 0,
 
   ssl: {
-    ca: process.env.DB_CA,
+    ca: fs.readFileSync(process.env.DB_CA || ''),
     rejectUnauthorized: true
   }
   
