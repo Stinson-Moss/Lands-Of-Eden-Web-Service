@@ -316,7 +316,6 @@ app.post('/auth/roblox', async (req, res) => {
     }
 
     session = JSON.parse(session);
-    console.log('SESSION:', JSON.stringify(session))
     let { token, refreshToken, expiresIn } = session;
     let needsUpdate = false;
 
@@ -362,6 +361,8 @@ app.post('/auth/roblox', async (req, res) => {
         Authorization: `Bearer ${access_token}`,
       },
     });
+
+    console.log('ROBLOX TOKEN:', access_token, access_token.length, refresh_token.length)
 
     let query: string | null = null;
     let sessionQuery = '';
