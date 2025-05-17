@@ -332,7 +332,8 @@ app.post('/auth/roblox', async (req, res) => {
     }
 
     session = JSON.parse(session);
-    let { token, refreshToken, expiresIn } = session;
+    let { token, refreshToken } = session;
+    let expiresIn = null;
     let needsUpdate = false;
 
     const [rows] = await pool.query('SELECT * FROM users WHERE token = ?', [token])
@@ -342,12 +343,13 @@ app.post('/auth/roblox', async (req, res) => {
 
     const queryObject = (rows as any[])[0]
     const discordInfo = await getDiscordInfo(queryObject.discordToken, queryObject.discordRefreshToken, queryObject.discordTokenExpires)
+    expiresIn = queryObject.tokenExpires;
 
     if (discordInfo.user.id !== queryObject.discordId) {
       return res.status(401).json({ error: 'Invalid token: Discord ID mismatch' });
     }
 
-    if (expiresIn < Date.now() / 1000) {
+    if (queryObject.tokenExpires < Date.now() / 1000) {
       if (queryObject.refreshToken !== refreshToken) {
         return res.status(401).json({ error: 'Invalid token: Refresh token mismatch' });
       }
@@ -450,7 +452,7 @@ app.post('/logout', async (req, res) => {
 
 app.post('/unlink', async (req, res) => {
   try {
-    const { session } = req.cookies.session
+    const { session } = req.cookies.session;
 
     if (!session) {
       return res.status(401).json({ error: 'No login information found' });
@@ -459,7 +461,7 @@ app.post('/unlink', async (req, res) => {
     let {token, refreshToken} = JSON.parse(session);
 
     if (!token || !refreshToken) {
-      return res.status(401).json({ error: 'No login information found' });
+      return res.status(401).json({ error: 'No login tokens found' });
     }
 
     const [rows] = await pool.query(`
