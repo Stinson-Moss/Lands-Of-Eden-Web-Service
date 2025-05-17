@@ -35,7 +35,7 @@ const App: React.FC = () => {
       const refreshToken = session.refreshToken;
       const expiresIn = session.expiresIn;
 
-      const body = (expiresIn > Date.now()) ? JSON.stringify({ token: token }) : JSON.stringify({ refresh: refreshToken });
+      const body = (expiresIn > Date.now() / 1000) ? JSON.stringify({ token: token }) : JSON.stringify({ refresh: refreshToken });
 
       fetch(`${BACKEND_URL}/auth/getUser`, {
         method: 'POST',

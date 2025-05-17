@@ -34,9 +34,9 @@ CREATE TABLE IF NOT EXISTS users (
   refreshToken VARCHAR(255) NOT NULL,
   discordRefreshToken VARCHAR(255) NOT NULL,
   robloxRefreshToken VARCHAR(255) NOT NULL,
-  tokenExpires INT NOT NULL,
-  discordTokenExpires INT NOT NULL,
-  robloxTokenExpires INT NOT NULL,
+  tokenExpires BIGINT NOT NULL,
+  discordTokenExpires BIGINT NOT NULL,
+  robloxTokenExpires BIGINT NOT NULL,
 
   PRIMARY KEY (discordId),
   INDEX(discordId),

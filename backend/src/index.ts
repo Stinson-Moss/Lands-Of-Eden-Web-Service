@@ -40,7 +40,7 @@ function generateSessionData() {
 }
 
 async function getDiscordInfo(token: string, refreshToken: string, expiresIn: number) {
-  if (expiresIn < Date.now()) {
+  if (expiresIn < Date.now() / 1000) {
     const tokenResponse = await axios.post('https://discord.com/api/oauth2/token', 
       new URLSearchParams({
         client_id: DISCORD_CLIENT_ID!,
@@ -57,7 +57,7 @@ async function getDiscordInfo(token: string, refreshToken: string, expiresIn: nu
     const { discord_access_token, discord_refresh_token, discord_expires_in } = tokenResponse.data;
     token = discord_access_token
     refreshToken = discord_refresh_token
-    expiresIn = discord_expires_in
+    expiresIn = Math.floor(Date.now() / 1000 + discord_expires_in)
   }
   
   const userResponse = await axios.get('https://discord.com/api/users/@me', {
@@ -76,7 +76,7 @@ async function getDiscordInfo(token: string, refreshToken: string, expiresIn: nu
 
 async function getRobloxInfo(token: string, refreshToken: string, expiresIn: number) {
   
-  if (expiresIn < Date.now()) {
+  if (expiresIn < Date.now() / 1000) {
     const tokenResponse = await axios.post('https://apis.roblox.com/oauth/v1/token', {
       client_id: ROBLOX_CLIENT_ID,
       client_secret: ROBLOX_CLIENT_SECRET,
@@ -91,7 +91,7 @@ async function getRobloxInfo(token: string, refreshToken: string, expiresIn: num
     const { access_token, refresh_token, expires_in } = tokenResponse.data;
     token = access_token
     refreshToken = refresh_token
-    expiresIn = expires_in
+    expiresIn = Math.floor(Date.now() / 1000 + expires_in)
 
     // update the roblox tokens in the database
     const query = `UPDATE users
@@ -176,8 +176,8 @@ app.post('/auth/getUser', async (req, res) => {
         sessionData.refreshToken, 
         access_token, 
         refresh_token, 
-        Date.now() + SESSION_EXPIRATION,
-        expires_in, 
+        Math.floor(Date.now() / 1000 + SESSION_EXPIRATION),
+        Math.floor(Date.now() / 1000 + expires_in), 
         null,
         null,
         null,
@@ -209,17 +209,29 @@ app.post('/auth/getUser', async (req, res) => {
 
     const queryObject = (rows as any[])[0]
 
-    if (queryObject.tokenExpires < Date.now()) {
+    if (queryObject.tokenExpires < Date.now() / 1000) {
       return res.status(401).json({ error: 'Invalid token: Token expired' });
     }
 
     const discordInfo = await getDiscordInfo(queryObject.discordToken, queryObject.discordRefreshToken, queryObject.discordTokenExpires)
 
-    if (discordInfo.token != queryObject.discordToken) {
-      // update the user in the database
-      const query = `UPDATE users
-      SET discordToken = ?, discordRefreshToken = ?, discordTokenExpires = ? WHERE token = ?`;
-      await pool.query(query, [discordInfo.token, discordInfo.refreshToken, discordInfo.expiresIn, token]);
+    // Update Discord token information if it has changed
+    if (discordInfo.token !== queryObject.discordToken) {
+      // Update the user's Discord credentials in the database
+      const query = `
+        UPDATE users
+        SET discordToken = ?,
+            discordRefreshToken = ?,
+            discordTokenExpires = ?
+        WHERE token = ?
+      `;
+      
+      await pool.query(query, [
+        discordInfo.token,
+        discordInfo.refreshToken,
+        Math.floor(Date.now() / 1000 + discordInfo.expiresIn),
+        token
+      ]);
     }
 
     const robloxInfo = await getRobloxInfo(queryObject.robloxToken, queryObject.robloxRefreshToken, queryObject.robloxTokenExpires)
@@ -254,15 +266,40 @@ app.post('/auth/getUser', async (req, res) => {
     const discordInfo = await getDiscordInfo(queryObject.discordToken, queryObject.discordRefreshToken, queryObject.discordTokenExpires)
 
     if (discordInfo.token != queryObject.discordToken) {
-      // update the user in the database and the session data
-      const query = `UPDATE users
-      SET token = ?, refreshToken = ?, tokenExpires = ?, discordToken = ?, discordRefreshToken = ?, discordTokenExpires = ? WHERE token = ?`;
-      await pool.query(query, [newSessionData.token, newSessionData.refreshToken, newSessionData.expiresIn, discordInfo.token, discordInfo.refreshToken, discordInfo.expiresIn, token]);
+      const query = `
+        UPDATE users
+        SET token = ?,
+            refreshToken = ?,
+            tokenExpires = ?,
+            discordToken = ?,
+            discordRefreshToken = ?,
+            discordTokenExpires = ?
+        WHERE token = ?
+      `;
+      await pool.query(query, [
+        newSessionData.token,
+        newSessionData.refreshToken,
+        Math.floor(Date.now() / 1000 + newSessionData.expiresIn),
+        discordInfo.token,
+        discordInfo.refreshToken,
+        Math.floor(Date.now() / 1000 + discordInfo.expiresIn),
+        queryObject.token 
+      ]);
     } else {
-      // update the session data only
-      const query = `UPDATE users
-      SET token = ?, refreshToken = ?, tokenExpires = ? WHERE token = ?`;
-      await pool.query(query, [newSessionData.token, newSessionData.refreshToken, newSessionData.expiresIn, token]);
+      // If Discord token hasn't changed, only update session data
+      const query = `
+        UPDATE users
+        SET token = ?,
+            refreshToken = ?,
+            tokenExpires = ?
+        WHERE token = ?
+      `;
+      await pool.query(query, [
+        newSessionData.token,
+        newSessionData.refreshToken,
+        newSessionData.expiresIn,
+        queryObject.token // Using queryObject.token instead of token
+      ]);
     }
 
     const robloxInfo = await getRobloxInfo(queryObject.robloxToken, queryObject.robloxRefreshToken, queryObject.robloxTokenExpires)
@@ -319,9 +356,22 @@ app.post('/api/roblox/token', async (req, res) => {
     });
 
     // update the roblox tokens in the database
-    const updateQuery = `UPDATE users
-    SET robloxToken = ?, robloxRefreshToken = ?, robloxTokenExpires = ?, robloxId = ? WHERE token = ?`;
-    await pool.query(updateQuery, [access_token, refresh_token, expires_in, userResponse.data.sub, token]);
+    // Update user's Roblox authentication information in the database
+    const tokenExpirationTime = Math.floor(Date.now() / 1000 + expires_in);
+    const robloxUserId = userResponse.data.sub;
+    const updateQuery = `
+      UPDATE users
+      SET robloxToken = ?,
+          robloxRefreshToken = ?,
+          robloxTokenExpires = ?,
+          robloxId = ?
+      WHERE token = ?
+    `;
+    
+    await pool.query(
+      updateQuery, 
+      [access_token, refresh_token, tokenExpirationTime, robloxUserId, token]
+    );
 
 
     const formattedUser = {
