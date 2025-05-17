@@ -1,21 +1,23 @@
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
   min-height: calc(100vh - 64px);
   background-color: #1a1a1a;
   color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mainContent {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  align-items: flex-start;
-  gap: 3rem;
+  align-items: center;
+  gap: 2.5rem;
   max-width: 1200px;
-  margin: 0 auto;
-  padding-top: 3rem;
+  width: 100%;
 }
 
 .welcomeSection {
@@ -30,10 +32,9 @@
 }
 
 .homeLogo {
-  width: 100px;
-  display: flex;
+  width: 400px;
   height: auto;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .accountsWidget {
@@ -43,7 +44,7 @@
   background: #232323;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-  padding: 2rem 1.5rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -53,8 +54,7 @@
   .mainContent {
     flex-direction: column;
     align-items: center;
-    gap: 2rem;
-    padding-top: 2rem;
+    gap: 1.5rem;
   }
   .welcomeSection, .accountsWidget {
     max-width: 100%;
@@ -63,14 +63,8 @@
     text-align: center;
   }
   .logo {
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
   }
-}
-
-.homeLogo {
-  width: 400px;
-  height: auto;
-  margin-bottom: 2rem;
 }
 
 .description {
@@ -78,12 +72,17 @@
   font-size: 1.2rem;
   max-width: 600px;
   margin: 0 auto;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  margin-top: 0;
+  margin-bottom: 1rem;
 }
 
 .loading, .error {
   text-align: center;
   font-size: 1.2rem;
-  margin-top: 2rem;
 }
 
 .error {
@@ -91,7 +90,7 @@
 }
 
 .accounts {
-  margin-top: 2rem;
+  margin-top: 1rem;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
@@ -100,21 +99,22 @@
 .accountSection {
   background-color: #2a2a2a;
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: 1.2rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .accountSection h2 {
   color: #f0e6d2;
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+  margin-top: 0;
 }
 
 .account {
   background-color: #333333;
   border-radius: 6px;
-  padding: 1rem;
-  margin-bottom: 1rem;
+  padding: 0.8rem;
+  margin-bottom: 0.8rem;
   transition: background 0.2s, color 0.2s;
 }
 
@@ -143,8 +143,8 @@
 }
 
 .avatar {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -152,11 +152,46 @@
 .accountInfo h3 {
   color: #f0e6d2;
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .accountInfo p {
   margin: 0.25rem 0 0;
   color: #cccccc;
   font-size: 0.9rem;
+}
+
+.loginDescription {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  background: #2a2a2a;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 0.8rem 1.2rem;
+  margin-top: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  max-width: 320px;
+}
+
+.loginDescription:hover {
+  background: #5865F2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(88, 101, 242, 0.4);
+}
+
+.loginDescription p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.discordIcon {
+  display: flex;
+  align-items: center;
+  width: 20px;
+  height: 20px;
 } 

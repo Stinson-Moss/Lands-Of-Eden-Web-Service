@@ -2,8 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './Navbar.css';
 import logo from '../assets/logo.png';
+import LoginWidget from './LoginWidget';
+import { User } from '../types/Session';
 
-const Navbar: React.FC = () => {
+interface NavbarProps {
+  user: User | null;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ user }) => {
   return (
     <nav className="navbar">
       <div className="navContent">
@@ -13,6 +19,9 @@ const Navbar: React.FC = () => {
             <span className="logoText">Lands of Eden</span>
           </Link>
           <Link to="/" className="navLink">Home</Link>
+        </div>
+        <div className="navRight">
+          {/* <LoginWidget user={user}/> */}
         </div>
       </div>
     </nav>
