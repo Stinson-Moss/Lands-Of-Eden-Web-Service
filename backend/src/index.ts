@@ -158,35 +158,30 @@ app.post('/auth/getUser', async (req, res) => {
       ON DUPLICATE KEY UPDATE 
       discordId = VALUES(discordId), token = VALUES(token), refreshToken = VALUES(refreshToken), discordToken = VALUES(discordToken), discordRefreshToken = VALUES(discordRefreshToken), tokenExpires = VALUES(tokenExpires), discordTokenExpires = VALUES(discordTokenExpires)`
       
-      try {
-        await pool.query(query, [
-          userResponse.data.id, 
-          sessionData.token, 
-          sessionData.refreshToken, 
-          discord_access_token, 
-          discord_refresh_token, 
-          Date.now() + SESSION_EXPIRATION,
-          discord_expires_in, 
-          null,
-          null,
-          null,
-          0
-        ])
-        
-        res.json({
-          session: sessionData,
-          user: {
-            discord: {
-              username: userResponse.data.username,
-              avatar: userResponse.data.avatar,
-              id: userResponse.data.id,
-            },
-          }
-        });
-      } catch (error) {
-        console.error('Error updating user:', error);
-        res.status(500).json({ error: 'Failed to update user' });
-      }
+      await pool.query(query, [
+        userResponse.data.id, 
+        sessionData.token, 
+        sessionData.refreshToken, 
+        discord_access_token, 
+        discord_refresh_token, 
+        Date.now() + SESSION_EXPIRATION,
+        discord_expires_in, 
+        null,
+        null,
+        null,
+        0
+      ])
+      
+      res.json({
+        session: sessionData,
+        user: {
+          discord: {
+            username: userResponse.data.username,
+            avatar: userResponse.data.avatar,
+            id: userResponse.data.id,
+          },
+        }
+      });
       
     } catch (error) {
       console.error('Token exchange error:', error);
@@ -291,8 +286,6 @@ app.post('/api/roblox/token', async (req, res) => {
     if ((rows as any[]).length !== 1) {
       return res.status(401).json({ error: 'Invalid token' });
     }
-
-    const queryObject = (rows as any[])[0];
 
     const tokenResponse = await axios.post('https://apis.roblox.com/oauth/v1/token', {
       client_id: ROBLOX_CLIENT_ID,
