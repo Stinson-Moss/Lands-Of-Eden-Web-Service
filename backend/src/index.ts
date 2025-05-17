@@ -154,11 +154,22 @@ app.post('/auth/getUser', async (req, res) => {
       
 
       // if the user exists in the database, update the tokens
-      const query = `INSERT INTO users (discordId, token, refreshToken, discordToken, discordRefreshToken, tokenExpires, discordTokenExpires, robloxToken, robloxRefreshToken, robloxTokenExpires, robloxId) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
-      ON DUPLICATE KEY UPDATE 
-      discordId = VALUES(discordId), token = VALUES(token), refreshToken = VALUES(refreshToken), discordToken = VALUES(discordToken), discordRefreshToken = VALUES(discordRefreshToken), tokenExpires = VALUES(tokenExpires), discordTokenExpires = VALUES(discordTokenExpires)`
-      
+      const query = `
+        INSERT INTO users (
+          discordId, token, refreshToken, discordToken, discordRefreshToken, 
+          tokenExpires, discordTokenExpires, robloxToken, robloxRefreshToken, 
+          robloxTokenExpires, robloxId
+        ) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
+        ON DUPLICATE KEY UPDATE 
+          discordId = VALUES(discordId),
+          token = VALUES(token),
+          refreshToken = VALUES(refreshToken),
+          discordToken = VALUES(discordToken),
+          discordRefreshToken = VALUES(discordRefreshToken),
+          tokenExpires = VALUES(tokenExpires),
+          discordTokenExpires = VALUES(discordTokenExpires)
+      `
       await pool.query(query, [
         userResponse.data.id, 
         sessionData.token, 
