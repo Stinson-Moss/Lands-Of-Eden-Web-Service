@@ -20,7 +20,7 @@ const COOKIE_EXPIRATION = 365 * 24 * 60 * 60 * 1000;
 function generateSessionData() {
   const access_token = crypto.randomBytes(32).toString('hex');
   const refresh_token = crypto.randomBytes(32).toString('hex');
-  return { token: access_token, refreshToken: refresh_token, expiresIn: SESSION_EXPIRATION };
+  return { token: access_token, refreshToken: refresh_token, expiresIn: Date.now() / 1000 + SESSION_EXPIRATION };
 }
 
 async function getDiscordInfo(token: string, refreshToken: string, expiresIn: number) {
@@ -131,6 +131,7 @@ app.post('/auth/getUser', async (req, res) => {
 
 
   if (code) {
+    console.log('DISCORD CODE:', code)
     try {
       const tokenResponse = await axios.post('https://discord.com/api/oauth2/token', 
         new URLSearchParams({
@@ -212,6 +213,7 @@ app.post('/auth/getUser', async (req, res) => {
     }
   } else if (session) {
 
+    console.log('SESSION:', session)
     session = JSON.parse(session);
     let { token, refreshToken, expiresIn } = session;
     const [rows] = await pool.query('SELECT * FROM users WHERE token = ?', [token])
@@ -273,6 +275,7 @@ app.post('/auth/getUser', async (req, res) => {
       ]);
     }
 
+    console.log('SET COOKIE')
     res.cookie('session', JSON.stringify({token: token, refreshToken: refreshToken, expiresIn: expiresIn}), {
       httpOnly: true,
       secure: true,
@@ -307,12 +310,14 @@ app.post('/api/roblox/token', async (req, res) => {
     }
 
     // verify the token
+    console.log('ROBLOX CODE:', code)
     let session = req.cookies.session;
     if (!session) {
       return res.status(401).json({ error: 'No login information found' });
     }
 
     session = JSON.parse(session);
+    console.log('SESSION:', JSON.stringify(session))
     let { token, refreshToken, expiresIn } = session;
     let needsUpdate = false;
 
