@@ -301,7 +301,7 @@ app.post('/auth/getUser', async (req, res) => {
   }
 })
 
-app.post('/api/roblox/token', async (req, res) => {
+app.post('/auth/roblox', async (req, res) => {
   try {
     const { code } = req.body;
 
@@ -310,7 +310,6 @@ app.post('/api/roblox/token', async (req, res) => {
     }
 
     // verify the token
-    console.log('ROBLOX CODE:', code)
     let session = req.cookies.session;
     if (!session) {
       return res.status(401).json({ error: 'No login information found' });
@@ -327,6 +326,11 @@ app.post('/api/roblox/token', async (req, res) => {
     }
 
     const queryObject = (rows as any[])[0]
+    const discordInfo = await getDiscordInfo(queryObject.discordToken, queryObject.discordRefreshToken, queryObject.discordTokenExpires)
+
+    if (discordInfo.user.id !== queryObject.discordId) {
+      return res.status(401).json({ error: 'Invalid token: Discord ID mismatch' });
+    }
 
     if (expiresIn < Date.now() / 1000) {
       if (queryObject.refreshToken !== refreshToken) {
@@ -361,12 +365,18 @@ app.post('/api/roblox/token', async (req, res) => {
 
     let query: string | null = null;
     let sessionQuery = '';
+    let discordQuery = '';
     let robloxQuery = '';
     const updateFields = [];
 
     if (needsUpdate) {
       sessionQuery = `token = ?, refreshToken = ?, tokenExpires = ?,`
       updateFields.push(token, refreshToken, expiresIn)
+    }
+
+    if (discordInfo.token !== queryObject.discordToken) {
+      discordQuery = `discordToken = ?, discordRefreshToken = ?, discordTokenExpires = ?,`
+      updateFields.push(discordInfo.token, discordInfo.refreshToken, discordInfo.expiresIn)
     }
 
     robloxQuery = `robloxToken = ?, robloxRefreshToken = ?, robloxTokenExpires = ?`
@@ -376,13 +386,12 @@ app.post('/api/roblox/token', async (req, res) => {
     if (updateFields.length > 0) {
       query = `UPDATE users SET 
         ${sessionQuery}
+        ${discordQuery}
         ${robloxQuery}
         WHERE token = ?`;
         
         await pool.query(query, [...updateFields, token])
     }
-
-
 
     const formattedUser = {
       username: userResponse.data.preferred_username,
@@ -399,7 +408,14 @@ app.post('/api/roblox/token', async (req, res) => {
     });
 
     res.json({
-      user: formattedUser,
+      user: {
+        discord: {
+          username: discordInfo.user.username,
+          avatar: discordInfo.user.avatar,
+          id: discordInfo.user.id,
+        },
+        roblox: formattedUser,
+      },
     });
     
   } catch (error) {

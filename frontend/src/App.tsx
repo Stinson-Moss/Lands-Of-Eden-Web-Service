@@ -11,11 +11,21 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get('code');
+    const stateParam = new URLSearchParams(window.location.search).get('state');
     window.history.replaceState({}, '', window.location.pathname);
 
+    const state = stateParam && code ? JSON.parse(stateParam) : null;
+
     const body = code? JSON.stringify({code: code}) : null;
-      
-    fetch(`${BACKEND_URL}/auth/getUser`, {
+    let url = null;
+
+    if (state && state === 'roblox') {
+      url = `${BACKEND_URL}/auth/roblox`;
+    } else {
+      url = `${BACKEND_URL}/auth/getUser`;
+    }
+    
+    fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: body,
