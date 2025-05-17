@@ -46,7 +46,8 @@
   height: 28px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid #f0e6d2;
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .navLoginUsername {

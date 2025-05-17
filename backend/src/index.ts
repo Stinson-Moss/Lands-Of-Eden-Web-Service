@@ -393,13 +393,6 @@ app.post('/auth/roblox', async (req, res) => {
         await pool.query(query, [...updateFields, token])
     }
 
-    const formattedUser = {
-      username: userResponse.data.preferred_username,
-      displayname: userResponse.data.name,
-      picture: userResponse.data.picture,
-    }
-
-
     res.cookie('session', JSON.stringify({token: token, refreshToken: refreshToken, expiresIn: expiresIn}), {
       httpOnly: true,
       secure: true,
@@ -414,7 +407,11 @@ app.post('/auth/roblox', async (req, res) => {
           avatar: discordInfo.user.avatar,
           id: discordInfo.user.id,
         },
-        roblox: formattedUser,
+        roblox: {
+          username: userResponse.data.preferred_username,
+          displayname: userResponse.data.name,
+          avatar: userResponse.data.picture,
+        },
       },
     });
     
