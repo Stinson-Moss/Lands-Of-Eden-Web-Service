@@ -4,12 +4,13 @@ import { User } from '../types/Session';
 
 interface AccountsWidgetProps {
   user: User | null;
+  setUser: (user: User | null) => void;
 }
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_LINK || '';
 const ROBLOX_OAUTH = process.env.REACT_APP_ROBLOX_OAUTH || '';
 
-const AccountsWidget: React.FC<AccountsWidgetProps> = ({ user }) => {
+const AccountsWidget: React.FC<AccountsWidgetProps> = ({ user, setUser }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const handleRobloxConnect = () => {
@@ -32,7 +33,14 @@ const AccountsWidget: React.FC<AccountsWidgetProps> = ({ user }) => {
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          window.location.reload();
+          if (!user) {
+            return;
+          }
+          
+          setUser({
+            discord: user.discord,
+            roblox: null
+          })
         }
       })
       .catch(error => {

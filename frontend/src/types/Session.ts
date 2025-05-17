@@ -14,5 +14,5 @@ export interface User {
         username: string;
         displayname: string;
         avatar: string;
-    };
+    } | null;
 }

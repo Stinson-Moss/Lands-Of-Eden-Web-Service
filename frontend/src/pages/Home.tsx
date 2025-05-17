@@ -6,11 +6,12 @@ import { User } from '../types/Session';
 
 interface HomeProps {
   user: User | null;
+  setUser: (user: User | null) => void;
 }
 
 const DISCORD_OAUTH = process.env.REACT_APP_DISCORD_OAUTH || '';
 
-const Home: React.FC<HomeProps> = ({ user }) => {
+const Home: React.FC<HomeProps> = ({ user, setUser }) => {
 
   const handleLogin = () => {
     window.location.href = DISCORD_OAUTH;
@@ -38,7 +39,7 @@ const Home: React.FC<HomeProps> = ({ user }) => {
             </div>
           ) : null}
         </div>
-        {user?.discord && <AccountsWidget user={user} />}
+        {user?.discord && <AccountsWidget user={user} setUser={setUser} />}
       </div>
     </div>
   );

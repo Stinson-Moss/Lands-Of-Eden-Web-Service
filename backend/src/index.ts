@@ -452,10 +452,10 @@ app.post('/logout', async (req, res) => {
 
 app.post('/unlink', async (req, res) => {
   try {
-    const { session } = req.cookies.session;
+    const session = req.cookies.session;
 
     if (!session) {
-      return res.status(401).json({ error: 'No login information found' });
+      return res.status(401).json({ error: 'No login session found' });
     }
 
     let {token, refreshToken} = JSON.parse(session);
