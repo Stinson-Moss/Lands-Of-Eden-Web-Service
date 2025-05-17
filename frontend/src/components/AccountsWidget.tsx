@@ -16,7 +16,7 @@ const AccountsWidget: React.FC<AccountsWidgetProps> = ({ user }) => {
   return (
     <div className="accountsWidget">
       <div className="accountSection">
-          <h2>Connect Your Roblox Account</h2>
+          <h2>Link Your Roblox Account</h2>
           <div
             className="account roblox"
             onClick={handleRobloxConnect}
