@@ -30,13 +30,13 @@ CREATE TABLE IF NOT EXISTS users (
   robloxId VARCHAR(255) NOT NULL,
   token VARCHAR(255) NOT NULL,
   discordToken VARCHAR(255) NOT NULL,
-  robloxToken VARCHAR(255) NOT NULL,
+  robloxToken VARCHAR(255),
   refreshToken VARCHAR(255) NOT NULL,
   discordRefreshToken VARCHAR(255) NOT NULL,
-  robloxRefreshToken VARCHAR(255) NOT NULL,
+  robloxRefreshToken VARCHAR(255),
   tokenExpires BIGINT NOT NULL,
   discordTokenExpires BIGINT NOT NULL,
-  robloxTokenExpires BIGINT NOT NULL,
+  robloxTokenExpires BIGINT,
 
   PRIMARY KEY (discordId),
   INDEX(discordId),
@@ -53,9 +53,12 @@ async function createSchema() {
 async function changeSchema() {
   await (await connection).execute(`
     ALTER TABLE users
-    DROP PRIMARY KEY,
-    ADD PRIMARY KEY (discordId)
+    MODIFY COLUMN robloxToken VARCHAR(255) NULL,
+    MODIFY COLUMN robloxRefreshToken VARCHAR(255) NULL,
+    MODIFY COLUMN robloxTokenExpires BIGINT NULL
   `);
+
+  connection.end();
 }
 
 async function clear() {
@@ -104,7 +107,12 @@ async function main() {
   await test();
 }
 
-main().catch(err => {
+// main().catch(err => {
+//   console.error(err);
+//   connection.end();
+// });
+
+changeSchema().catch(err => {
   console.error(err);
   connection.end();
 });

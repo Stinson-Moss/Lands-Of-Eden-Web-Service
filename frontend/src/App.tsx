@@ -71,7 +71,7 @@ const App: React.FC = () => {
   return (
     <Router>
       <div className="app">
-        <Navbar user={user}/>
+        <Navbar user={user} setUser={setUser}/>
         <Routes>
           <Route path="/" element={<Home session={session} user={user} />} />
           <Route path="*" element={<Navigate to="/" replace />} />

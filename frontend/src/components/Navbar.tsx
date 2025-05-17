@@ -7,9 +7,10 @@ import { User } from '../types/Session';
 
 interface NavbarProps {
   user: User | null;
+  setUser: (user: User | null) => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ user }) => {
+const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
   return (
     <nav className="navbar">
       <div className="navContent">
@@ -21,7 +22,7 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
           <Link to="/" className="navLink">Home</Link>
         </div>
         <div className="navRight">
-          {/* <LoginWidget user={user}/> */}
+          <LoginWidget user={user} setUser={setUser}/>
         </div>
       </div>
     </nav>
