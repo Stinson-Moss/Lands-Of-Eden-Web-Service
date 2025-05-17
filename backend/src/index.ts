@@ -129,7 +129,6 @@ app.post('/auth/getUser', async (req, res) => {
   const { code } = req.body;
   let session = req.cookies.session;
 
-
   if (code) {
     try {
       const tokenResponse = await axios.post('https://discord.com/api/oauth2/token', 
@@ -188,7 +187,16 @@ app.post('/auth/getUser', async (req, res) => {
         0
       ])
 
-      res.cookie('session', JSON.stringify({token: sessionData.token, refreshToken: sessionData.refreshToken, expiresIn: sessionData.expiresIn}), {
+      const [rows] = await pool.query(`
+        SELECT * 
+        FROM users 
+        WHERE discordId = ?`, 
+        [userResponse.data.id])
+
+      const queryObject = (rows as any[])[0]
+      let robloxInfo = await getRobloxInfo(queryObject.robloxToken, queryObject.robloxRefreshToken, queryObject.robloxTokenExpires)
+
+      res.cookie('session', JSON.stringify({token: sessionData.token, refreshToken: sessionData.refreshToken}), {
         httpOnly: true,
         secure: true,
         maxAge: COOKIE_EXPIRATION,
@@ -196,13 +204,17 @@ app.post('/auth/getUser', async (req, res) => {
       });
       
       res.json({
-        session: sessionData,
         user: {
           discord: {
             username: userResponse.data.username,
             avatar: userResponse.data.avatar,
             id: userResponse.data.id,
           },
+          roblox: robloxInfo ? {
+            username: robloxInfo.user.preferred_username,
+            displayname: robloxInfo.user.name,
+            avatar: robloxInfo.user.picture,
+          } : null
         }
       });
       
@@ -214,7 +226,7 @@ app.post('/auth/getUser', async (req, res) => {
 
     console.log('SESSION:', session)
     session = JSON.parse(session);
-    let { token, refreshToken, expiresIn } = session;
+    let { token, refreshToken } = session;
     const [rows] = await pool.query('SELECT * FROM users WHERE token = ?', [token])
     
     if (!rows || (rows as any[]).length !== 1) {
@@ -222,6 +234,7 @@ app.post('/auth/getUser', async (req, res) => {
     }
 
     const queryObject = (rows as any[])[0]
+    let expiresIn = queryObject.tokenExpires;
     let needsUpdate = false;
 
     if (expiresIn < Date.now() / 1000) {
@@ -247,7 +260,7 @@ app.post('/auth/getUser', async (req, res) => {
 
     if (needsUpdate) {
       sessionQuery = `token = ?, refreshToken = ?, tokenExpires = ?,`
-      updateFields.push(token, refreshToken, expiresIn)
+      updateFields.push(token, refreshToken, Math.floor(Date.now() / 1000 + SESSION_EXPIRATION))
     }
 
     if (discordInfo.token !== queryObject.discordToken) {
@@ -274,8 +287,7 @@ app.post('/auth/getUser', async (req, res) => {
       ]);
     }
 
-    console.log('SET COOKIE')
-    res.cookie('session', JSON.stringify({token: token, refreshToken: refreshToken, expiresIn: expiresIn}), {
+    res.cookie('session', JSON.stringify({token: token, refreshToken: refreshToken}), {
       httpOnly: true,
       secure: true,
       maxAge: COOKIE_EXPIRATION,
@@ -366,8 +378,6 @@ app.post('/auth/roblox', async (req, res) => {
       },
     });
 
-    console.log('ROBLOX TOKEN:', access_token, access_token.length, refresh_token.length)
-
     let query: string | null = null;
     let sessionQuery = '';
     let discordQuery = '';
@@ -398,7 +408,7 @@ app.post('/auth/roblox', async (req, res) => {
         await pool.query(query, [...updateFields, token])
     }
 
-    res.cookie('session', JSON.stringify({token: token, refreshToken: refreshToken, expiresIn: expiresIn}), {
+    res.cookie('session', JSON.stringify({token: token, refreshToken: refreshToken}), {
       httpOnly: true,
       secure: true,
       maxAge: COOKIE_EXPIRATION,
@@ -436,6 +446,82 @@ app.post('/logout', async (req, res) => {
   res.json({
     success: true
   })
+})
+
+app.post('/unlink', async (req, res) => {
+  try {
+    const { session } = req.cookies.session
+
+    if (!session) {
+      return res.status(401).json({ error: 'No login information found' });
+    }
+
+    let {token, refreshToken} = JSON.parse(session);
+
+    if (!token || !refreshToken) {
+      return res.status(401).json({ error: 'No login information found' });
+    }
+
+    const [rows] = await pool.query(`
+      SELECT * FROM users WHERE token = ?
+      `, [token])
+
+    if ((rows as any[]).length !== 1) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    const queryObject = (rows as any[])[0]
+    let needsUpdate = false;
+
+    if (queryObject.tokenExpires < Date.now() / 1000) {
+      if (queryObject.refreshToken !== refreshToken) {
+        return res.status(401).json({ error: 'Invalid token: Refresh token mismatch' });
+      }
+
+      const newSessionData = generateSessionData();
+      token = newSessionData.token;
+      refreshToken = newSessionData.refreshToken;
+      needsUpdate = true;
+    }
+
+    let query: string | null = null;
+    let sessionQuery = '';
+    let robloxQuery = '';
+    const updateFields = [];
+
+    if (needsUpdate) {
+      sessionQuery = `token = ?, refreshToken = ?, tokenExpires = ?,`
+      updateFields.push(token, refreshToken, Math.floor(Date.now() / 1000 + SESSION_EXPIRATION))
+    }
+
+    if (queryObject.robloxToken) {
+      robloxQuery = `robloxToken = NULL, robloxRefreshToken = NULL, robloxTokenExpires = NULL`
+      updateFields.push(null, null, null)
+    }
+
+    if (updateFields.length > 0) {
+      query = `UPDATE users SET 
+        ${sessionQuery}
+        ${robloxQuery}
+        WHERE token = ?`
+        
+        await pool.query(query, [...updateFields, token])
+    }
+
+    res.cookie('session', JSON.stringify({token: token, refreshToken: refreshToken}), {
+      httpOnly: true,
+      secure: true,
+      maxAge: COOKIE_EXPIRATION,
+      sameSite: 'none',
+    });
+
+    res.json({
+      success: true
+    })
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ error: 'Failed to logout' });
+  }
 })
 
 const PORT = process.env.PORT || 3001;
