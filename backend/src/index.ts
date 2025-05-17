@@ -131,7 +131,6 @@ app.post('/auth/getUser', async (req, res) => {
 
 
   if (code) {
-    console.log('DISCORD CODE:', code)
     try {
       const tokenResponse = await axios.post('https://discord.com/api/oauth2/token', 
         new URLSearchParams({

@@ -33,7 +33,8 @@ const App: React.FC = () => {
     .then(data => {
       setUser(data.user);
     })
-    .catch(() => {
+    .catch((e) => {
+      console.error('ERROR:', e)
       setUser(null);
     });
   }, []);

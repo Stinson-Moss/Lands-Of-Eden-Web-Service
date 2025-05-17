@@ -30,10 +30,10 @@ CREATE TABLE IF NOT EXISTS users (
   robloxId VARCHAR(255) NOT NULL,
   token VARCHAR(255) NOT NULL,
   discordToken VARCHAR(255) NOT NULL,
-  robloxToken VARCHAR(255),
+  robloxToken TEXT,
   refreshToken VARCHAR(255) NOT NULL,
   discordRefreshToken VARCHAR(255) NOT NULL,
-  robloxRefreshToken VARCHAR(255),
+  robloxRefreshToken TEXT,
   tokenExpires BIGINT NOT NULL,
   discordTokenExpires BIGINT NOT NULL,
   robloxTokenExpires BIGINT,
@@ -53,9 +53,8 @@ async function createSchema() {
 async function changeSchema() {
   await (await connection).execute(`
     ALTER TABLE users
-    MODIFY COLUMN robloxToken VARCHAR(255) NULL,
-    MODIFY COLUMN robloxRefreshToken VARCHAR(255) NULL,
-    MODIFY COLUMN robloxTokenExpires BIGINT NULL
+    MODIFY COLUMN robloxToken TEXT NULL,
+    MODIFY COLUMN robloxRefreshToken TEXT NULL
   `);
 
   connection.end();
