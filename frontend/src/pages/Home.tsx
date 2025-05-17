@@ -2,16 +2,15 @@ import React from 'react';
 import './Home.css';
 import logo from '../assets/logo.png';
 import AccountsWidget from '../components/AccountsWidget';
-import { Session, User } from '../types/Session';
+import { User } from '../types/Session';
 
 interface HomeProps {
-  session: Session | null;
   user: User | null;
 }
 
 const DISCORD_OAUTH = process.env.REACT_APP_DISCORD_OAUTH || '';
 
-const Home: React.FC<HomeProps> = ({ session, user }) => {
+const Home: React.FC<HomeProps> = ({ user }) => {
 
   const handleLogin = () => {
     window.location.href = DISCORD_OAUTH;
