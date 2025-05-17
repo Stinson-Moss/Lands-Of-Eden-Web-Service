@@ -21,7 +21,7 @@ const LoginWidget: React.FC<LoginWidgetProps> = ({ user, setUser }) => {
   };
 
   if (!user) {
-    return;
+    return <></>;
   }
 
 
