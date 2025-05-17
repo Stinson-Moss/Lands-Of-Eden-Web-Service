@@ -297,7 +297,12 @@ app.post('/auth/getUser', async (req, res) => {
       }
     });
 
+  } else {
+    res.json({
+      user: null
+    })
   }
+
 })
 
 app.post('/auth/roblox', async (req, res) => {
@@ -420,6 +425,18 @@ app.post('/auth/roblox', async (req, res) => {
     res.status(500).json({ error: 'Failed to exchange token' });
   }
 });
+
+app.post('/logout', async (req, res) => {
+  res.clearCookie('session', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+  });
+
+  res.json({
+    success: true
+  })
+})
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

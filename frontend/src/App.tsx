@@ -31,7 +31,11 @@ const App: React.FC = () => {
     })
     .then(res => res.json())
     .then(data => {
-      setUser(data.user);
+      if (data.user) {
+        setUser(data.user);
+      } else {
+        setUser(null);
+      }
     })
     .catch((e) => {
       console.error('ERROR:', e)
