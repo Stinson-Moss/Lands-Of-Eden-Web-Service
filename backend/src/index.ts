@@ -14,6 +14,7 @@ const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 const ROBLOX_CLIENT_ID = process.env.ROBLOX_CLIENT_ID;
 const ROBLOX_CLIENT_SECRET = process.env.ROBLOX_CLIENT_SECRET;
 const REDIRECT_URI: string = process.env.REDIRECT_URI || '';
+const ROBLOX_API_KEY = process.env.ROBLOX_API_KEY;
 const SESSION_EXPIRATION = 3600;
 const COOKIE_EXPIRATION = 365 * 24 * 60 * 60 * 1000;
 
@@ -58,29 +59,7 @@ async function getDiscordInfo(token: string, refreshToken: string, expiresIn: nu
   };
 }
 
-async function getRobloxInfo(token: string, refreshToken: string, expiresIn: number) {
-  if (!token) {
-    return null;
-  }
-
-  if (expiresIn < Date.now() / 1000) {
-    const tokenResponse = await axios.post('https://apis.roblox.com/oauth/v1/token', {
-      client_id: ROBLOX_CLIENT_ID,
-      client_secret: ROBLOX_CLIENT_SECRET,
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-    }, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
-
-    const { access_token, refresh_token, expires_in } = tokenResponse.data;
-    token = access_token
-    refreshToken = refresh_token
-    expiresIn = Math.floor(Date.now() / 1000 + expires_in)
-  }
-
+async function getRobloxInfo(token: string) {
   const userResponse = await axios.get('https://apis.roblox.com/oauth/v1/userinfo', {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -88,10 +67,28 @@ async function getRobloxInfo(token: string, refreshToken: string, expiresIn: num
   });
 
   return {
+    user: userResponse.data
+  }
+}
+
+async function getRobloxInfoWithKey(userid: number) {
+  const userResponse = await axios.get(`https://apis.roblox.com/cloud/v2/users/${userid}`, {
+    headers: {
+      'x-api-key': ROBLOX_API_KEY!,
+    },
+  });
+
+  const thumbnailResponse = await axios.get(`https://apis.roblox.com/cloud/v2/users/${userid}:generateThumbnail?size=60&format=PNG&shape=ROUND`,
+    {
+      headers: {
+        'x-api-key': ROBLOX_API_KEY!,
+      },
+    }
+  )
+
+  return {
     user: userResponse.data,
-    token: token,
-    refreshToken: refreshToken,
-    expiresIn: expiresIn
+    thumbnail: thumbnailResponse.data
   }
 }
 
@@ -160,10 +157,9 @@ app.post('/auth/getUser', async (req, res) => {
       const query = `
         INSERT INTO users (
           discordId, token, refreshToken, discordToken, discordRefreshToken, 
-          tokenExpires, discordTokenExpires, robloxToken, robloxRefreshToken, 
-          robloxTokenExpires, robloxId
+          tokenExpires, discordTokenExpires, robloxId
         ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?) 
         ON DUPLICATE KEY UPDATE 
           discordId = VALUES(discordId),
           token = VALUES(token),
@@ -180,10 +176,7 @@ app.post('/auth/getUser', async (req, res) => {
         access_token, 
         refresh_token, 
         Math.floor(Date.now() / 1000 + SESSION_EXPIRATION),
-        Math.floor(Date.now() / 1000 + expires_in), 
-        null,
-        null,
-        null,
+        Math.floor(Date.now() / 1000 + expires_in),
         0
       ])
 
@@ -194,7 +187,7 @@ app.post('/auth/getUser', async (req, res) => {
         [userResponse.data.id])
 
       const queryObject = (rows as any[])[0]
-      let robloxInfo = await getRobloxInfo(queryObject.robloxToken, queryObject.robloxRefreshToken, queryObject.robloxTokenExpires)
+      let robloxInfo = queryObject.robloxId? await getRobloxInfoWithKey(queryObject.robloxId) : null
 
       res.cookie('session', JSON.stringify({token: sessionData.token, refreshToken: sessionData.refreshToken}), {
         httpOnly: true,
@@ -211,16 +204,16 @@ app.post('/auth/getUser', async (req, res) => {
             id: userResponse.data.id,
           },
           roblox: robloxInfo ? {
-            username: robloxInfo.user.preferred_username,
-            displayname: robloxInfo.user.name,
-            avatar: robloxInfo.user.picture,
+            username: robloxInfo.user.username,
+            displayname: robloxInfo.user.displayName,
+            avatar: robloxInfo.thumbnail,
           } : null
         }
       });
       
     } catch (error) {
       console.error('Token exchange error:', error);
-      res.status(500).json({ error: 'Failed to exchange token' });
+      res.status(500).json({ error: 'Failed to exchange token: ' + error });
     }
   } else if (session) {
 
@@ -250,12 +243,11 @@ app.post('/auth/getUser', async (req, res) => {
     }
 
     const discordInfo = await getDiscordInfo(queryObject.discordToken, queryObject.discordRefreshToken, queryObject.discordTokenExpires)
-    const robloxInfo = await getRobloxInfo(queryObject.robloxToken, queryObject.robloxRefreshToken, queryObject.robloxTokenExpires)
+    const robloxInfo = queryObject.robloxId? await getRobloxInfoWithKey(queryObject.robloxId) : null
 
     let query: string | null = null;
     let sessionQuery = '';
     let discordQuery = '';
-    let robloxQuery = '';
     const updateFields = [];
 
     if (needsUpdate) {
@@ -267,18 +259,11 @@ app.post('/auth/getUser', async (req, res) => {
       discordQuery = `discordToken = ?, discordRefreshToken = ?, discordTokenExpires = ?,`
       updateFields.push(discordInfo.token, discordInfo.refreshToken, discordInfo.expiresIn)
     }
-
-    if (robloxInfo && robloxInfo.token !== queryObject.robloxToken) {
-      robloxQuery = `robloxToken = ?, robloxRefreshToken = ?, robloxTokenExpires = ?`
-      updateFields.push(robloxInfo.token, robloxInfo.refreshToken, robloxInfo.expiresIn)
-    }
-    
     // Combine all the queries
     if (updateFields.length > 0) {
       query = `UPDATE users SET 
         ${sessionQuery}
         ${discordQuery}
-        ${robloxQuery}
         WHERE token = ?`;
       
       await pool.query(query, [
@@ -302,9 +287,9 @@ app.post('/auth/getUser', async (req, res) => {
           id: discordInfo.user.id,
         },
         roblox: robloxInfo ? {
-          username: robloxInfo.user.preferred_username,
-          displayname: robloxInfo.user.name,
-          avatar: robloxInfo.user.picture,
+          username: robloxInfo.user.username,
+          displayname: robloxInfo.user.displayName,
+          avatar: robloxInfo.thumbnail,
         } : null
       }
     });
@@ -372,7 +357,7 @@ app.post('/auth/roblox', async (req, res) => {
       },
     });
 
-    const { access_token, refresh_token, expires_in } = tokenResponse.data;
+    const { access_token} = tokenResponse.data;
 
     const userResponse = await axios.get('https://apis.roblox.com/oauth/v1/userinfo', {
       headers: {
@@ -396,8 +381,8 @@ app.post('/auth/roblox', async (req, res) => {
       updateFields.push(discordInfo.token, discordInfo.refreshToken, discordInfo.expiresIn)
     }
 
-    robloxQuery = `robloxToken = ?, robloxRefreshToken = ?, robloxTokenExpires = ?`
-    updateFields.push(access_token, refresh_token, Math.floor(Date.now() / 1000 + expires_in))
+    robloxQuery = `robloxId = ?`
+    updateFields.push(userResponse.data.sub)
 
     // Combine all the queries
     if (updateFields.length > 0) {
@@ -494,11 +479,6 @@ app.post('/unlink', async (req, res) => {
     if (needsUpdate) {
       sessionQuery = `token = ?, refreshToken = ?, tokenExpires = ?,`
       updateFields.push(token, refreshToken, Math.floor(Date.now() / 1000 + SESSION_EXPIRATION))
-    }
-
-    if (queryObject.robloxToken) {
-      robloxQuery = `robloxToken = NULL, robloxRefreshToken = NULL, robloxTokenExpires = NULL`
-      updateFields.push(null, null, null)
     }
 
     if (updateFields.length > 0) {

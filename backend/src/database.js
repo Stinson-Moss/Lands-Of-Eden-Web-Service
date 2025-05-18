@@ -53,8 +53,9 @@ async function createSchema() {
 async function changeSchema() {
   await (await connection).execute(`
     ALTER TABLE users
-    MODIFY COLUMN robloxToken TEXT NULL,
-    MODIFY COLUMN robloxRefreshToken TEXT NULL
+    DROP COLUMN robloxToken,
+    DROP COLUMN robloxRefreshToken,
+    DROP COLUMN robloxTokenExpires
   `);
 
   connection.end();
