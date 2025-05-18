@@ -43,7 +43,9 @@ const App: React.FC = () => {
         console.error('ERROR:', e);
         setUser(null);
       } finally {
-        setIsLoading(false);
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 8000);
       }
     };
 

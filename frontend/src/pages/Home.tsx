@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useRef,useCallback } from 'react';
 import './Home.css';
 import logo from '../assets/eden.svg';
 import discordIcon from '../assets/discord-icon.svg';
@@ -14,6 +14,7 @@ interface HomeProps {
 const DISCORD_OAUTH = process.env.REACT_APP_DISCORD_OAUTH || '';
 
 const Home: React.FC<HomeProps> = ({ isLoading, user, setUser }) => {
+  const logoRef = useRef<HTMLImageElement>(null);
   const handleLogin = useCallback(() => {
     window.location.href = DISCORD_OAUTH;
   }, []);
@@ -23,6 +24,12 @@ const Home: React.FC<HomeProps> = ({ isLoading, user, setUser }) => {
       handleLogin();
     }
   }, [handleLogin]);
+  
+  const handleAnimation = useCallback(() => {
+    if (!isLoading && logoRef.current) {
+      logoRef.current.classList.remove('rotate');
+    }
+  }, [isLoading]);
 
   return (
     <div className="container">
@@ -31,13 +38,10 @@ const Home: React.FC<HomeProps> = ({ isLoading, user, setUser }) => {
           <img 
             src={logo} 
             alt="Adam Bot Logo" 
-            className={`homeLogo ${isLoading ? 'loading' : 'finishedLoading'}`}
+            className={`homeLogo rotate`}
+            ref={logoRef}
+            onAnimationIteration={handleAnimation}
           />
-          <div className={`${isLoading ? 'loadingCircleContainer' : 'invisible'}`}>
-            <div className="loadingCircle">
-              <div className="loadingCursor"></div>
-            </div>
-          </div>
           <div className="welcomeText">
             <h1 className={`${isLoading ? 'hidden' : 'fadeIn'}`}>Welcome to Eden</h1>
           </div>
