@@ -218,82 +218,88 @@ app.post('/auth/getUser', async (req, res) => {
     }
   } else if (session) {
 
-    console.log('SESSION:', session)
-    session = JSON.parse(session);
-    let { token, refreshToken } = session;
-    const [rows] = await pool.query('SELECT * FROM users WHERE token = ?', [token])
-    
-    if (!rows || (rows as any[]).length !== 1) {
-      return res.status(401).json({ error: 'Invalid token: Token not found' });
-    }
+    try {
 
-    const queryObject = (rows as any[])[0]
-    let expiresIn = queryObject.tokenExpires;
-    let needsUpdate = false;
-
-    if (expiresIn < Date.now() / 1000) {
-      if (queryObject.refreshToken !== refreshToken) {
-        return res.status(401).json({ error: 'Invalid token: Refresh token mismatch' });
-      }
-
-      const sessionData = generateSessionData();
-      token = sessionData.token;
-      refreshToken = sessionData.refreshToken;
-      expiresIn = sessionData.expiresIn;
-      needsUpdate = true;
-    }
-
-    const discordInfo = await getDiscordInfo(queryObject.discordToken, queryObject.discordRefreshToken, queryObject.discordTokenExpires)
-    const robloxInfo = queryObject.robloxId && queryObject.robloxId > 0? await getRobloxInfoWithKey(queryObject.robloxId) : null
-
-    let query: string | null = null;
-    let sessionQuery = '';
-    let discordQuery = '';
-    const updateFields = [];
-
-    if (needsUpdate) {
-      sessionQuery = `token = ?, refreshToken = ?, tokenExpires = ?,`
-      updateFields.push(token, refreshToken, Math.floor(Date.now() / 1000 + SESSION_EXPIRATION))
-    }
-
-    if (discordInfo.token !== queryObject.discordToken) {
-      discordQuery = `discordToken = ?, discordRefreshToken = ?, discordTokenExpires = ?,`
-      updateFields.push(discordInfo.token, discordInfo.refreshToken, discordInfo.expiresIn)
-    }
-    // Combine all the queries
-    if (updateFields.length > 0) {
-      query = `UPDATE users SET 
-        ${sessionQuery}
-        ${discordQuery}
-        WHERE token = ?`;
+      console.log('SESSION:', session)
+      session = JSON.parse(session);
+      let { token, refreshToken } = session;
+      const [rows] = await pool.query('SELECT * FROM users WHERE token = ?', [token])
       
-      await pool.query(query, [
-        ...updateFields,
-        queryObject.token
-      ]);
-    }
-
-    res.cookie('session', JSON.stringify({token: token, refreshToken: refreshToken}), {
-      httpOnly: true,
-      secure: true,
-      maxAge: COOKIE_EXPIRATION,
-      sameSite: 'none',
-    });
-    
-    res.json({
-      user: {
-        discord: {
-          username: discordInfo.user.username,
-          avatar: discordInfo.user.avatar,
-          id: discordInfo.user.id,
-        },
-        roblox: robloxInfo ? {
-          username: robloxInfo.user.username,
-          displayname: robloxInfo.user.displayName,
-          avatar: robloxInfo.thumbnail,
-        } : null
+      if (!rows || (rows as any[]).length !== 1) {
+        return res.status(401).json({ error: 'Invalid token: Token not found' });
       }
-    });
+  
+      const queryObject = (rows as any[])[0]
+      let expiresIn = queryObject.tokenExpires;
+      let needsUpdate = false;
+  
+      if (expiresIn < Date.now() / 1000) {
+        if (queryObject.refreshToken !== refreshToken) {
+          return res.status(401).json({ error: 'Invalid token: Refresh token mismatch' });
+        }
+  
+        const sessionData = generateSessionData();
+        token = sessionData.token;
+        refreshToken = sessionData.refreshToken;
+        expiresIn = sessionData.expiresIn;
+        needsUpdate = true;
+      }
+  
+      const discordInfo = await getDiscordInfo(queryObject.discordToken, queryObject.discordRefreshToken, queryObject.discordTokenExpires)
+      const robloxInfo = queryObject.robloxId && queryObject.robloxId > 0? await getRobloxInfoWithKey(queryObject.robloxId) : null
+  
+      let query: string | null = null;
+      let sessionQuery = '';
+      let discordQuery = '';
+      const updateFields = [];
+  
+      if (needsUpdate) {
+        sessionQuery = `token = ?, refreshToken = ?, tokenExpires = ?,`
+        updateFields.push(token, refreshToken, Math.floor(Date.now() / 1000 + SESSION_EXPIRATION))
+      }
+  
+      if (discordInfo.token !== queryObject.discordToken) {
+        discordQuery = `discordToken = ?, discordRefreshToken = ?, discordTokenExpires = ?,`
+        updateFields.push(discordInfo.token, discordInfo.refreshToken, discordInfo.expiresIn)
+      }
+      // Combine all the queries
+      if (updateFields.length > 0) {
+        query = `UPDATE users SET 
+          ${sessionQuery}
+          ${discordQuery}
+          WHERE token = ?`;
+        
+        await pool.query(query, [
+          ...updateFields,
+          queryObject.token
+        ]);
+      }
+  
+      res.cookie('session', JSON.stringify({token: token, refreshToken: refreshToken}), {
+        httpOnly: true,
+        secure: true,
+        maxAge: COOKIE_EXPIRATION,
+        sameSite: 'none',
+      });
+      
+      res.json({
+        user: {
+          discord: {
+            username: discordInfo.user.username,
+            avatar: discordInfo.user.avatar,
+            id: discordInfo.user.id,
+          },
+          roblox: robloxInfo ? {
+            username: robloxInfo.user.username,
+            displayname: robloxInfo.user.displayName,
+            avatar: robloxInfo.thumbnail,
+          } : null
+        }
+      });
+    } catch (error) {
+      console.error('Session error:', error);
+      res.status(500).json({ error: 'Failed to get session' });
+    }
 
   } else {
     res.json({
