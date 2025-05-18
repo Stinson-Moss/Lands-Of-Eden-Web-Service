@@ -205,9 +205,9 @@ app.post('/auth/getUser', async (req, res) => {
             id: userResponse.data.id,
           },
           roblox: robloxInfo ? {
-            username: robloxInfo.user.username,
+            username: robloxInfo.user.name,
             displayname: robloxInfo.user.displayName,
-            avatar: robloxInfo.thumbnail,
+            avatar: robloxInfo.thumbnail.response.imageUri,
           } : null
         }
       });
@@ -290,9 +290,9 @@ app.post('/auth/getUser', async (req, res) => {
             id: discordInfo.user.id,
           },
           roblox: robloxInfo ? {
-            username: robloxInfo.user.username,
+            username: robloxInfo.user.name,
             displayname: robloxInfo.user.displayName,
-            avatar: robloxInfo.thumbnail,
+            avatar: robloxInfo.thumbnail.response.imageUri,
           } : null
         }
       });
