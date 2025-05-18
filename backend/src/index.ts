@@ -15,7 +15,7 @@ const ROBLOX_CLIENT_ID = process.env.ROBLOX_CLIENT_ID;
 const ROBLOX_CLIENT_SECRET = process.env.ROBLOX_CLIENT_SECRET;
 const REDIRECT_URI: string = process.env.REDIRECT_URI || '';
 const ROBLOX_API_KEY = process.env.ROBLOX_API_KEY;
-const SESSION_EXPIRATION = 3600;
+const SESSION_EXPIRATION = 600; // 10 minutes in seconds
 const COOKIE_EXPIRATION = 365 * 24 * 60 * 60 * 1000;
 
 function generateSessionData() {
