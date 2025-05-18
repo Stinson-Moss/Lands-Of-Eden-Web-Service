@@ -42,7 +42,7 @@ const Home: React.FC<HomeProps> = ({ isLoading, user, setUser }) => {
             <h1 className={`${isLoading ? 'hidden' : 'fadeIn'}`}>Welcome to Eden</h1>
           </div>
             <div 
-              className={`${isLoading ? 'hidden' : 'loginDescription fadeIn'}`}
+              className={`${isLoading || user?.discord ? 'hidden' : 'loginDescription fadeIn'}`}
               onClick={handleLogin}
               role="button"
               tabIndex={0}
