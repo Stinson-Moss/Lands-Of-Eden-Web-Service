@@ -167,7 +167,8 @@ app.post('/auth/getUser', async (req, res) => {
           discordToken = VALUES(discordToken),
           discordRefreshToken = VALUES(discordRefreshToken),
           tokenExpires = VALUES(tokenExpires),
-          discordTokenExpires = VALUES(discordTokenExpires)
+          discordTokenExpires = VALUES(discordTokenExpires),
+          robloxId = VALUES(robloxId)
       `
       await pool.query(query, [
         userResponse.data.id, 
@@ -177,7 +178,7 @@ app.post('/auth/getUser', async (req, res) => {
         refresh_token, 
         Math.floor(Date.now() / 1000 + SESSION_EXPIRATION),
         Math.floor(Date.now() / 1000 + expires_in),
-        0
+        null
       ])
 
       const [rows] = await pool.query(`
@@ -187,7 +188,7 @@ app.post('/auth/getUser', async (req, res) => {
         [userResponse.data.id])
 
       const queryObject = (rows as any[])[0]
-      let robloxInfo = queryObject.robloxId? await getRobloxInfoWithKey(queryObject.robloxId) : null
+      let robloxInfo = queryObject.robloxId && queryObject.robloxId > 0? await getRobloxInfoWithKey(queryObject.robloxId) : null
 
       res.cookie('session', JSON.stringify({token: sessionData.token, refreshToken: sessionData.refreshToken}), {
         httpOnly: true,
@@ -243,7 +244,7 @@ app.post('/auth/getUser', async (req, res) => {
     }
 
     const discordInfo = await getDiscordInfo(queryObject.discordToken, queryObject.discordRefreshToken, queryObject.discordTokenExpires)
-    const robloxInfo = queryObject.robloxId? await getRobloxInfoWithKey(queryObject.robloxId) : null
+    const robloxInfo = queryObject.robloxId && queryObject.robloxId > 0? await getRobloxInfoWithKey(queryObject.robloxId) : null
 
     let query: string | null = null;
     let sessionQuery = '';

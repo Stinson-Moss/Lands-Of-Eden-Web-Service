@@ -20,9 +20,7 @@ const connection = await mysql.createConnection({
     ca: fs.readFileSync(process.env.DB_CA || ''),
     rejectUnauthorized: true
   }
-})
-
-console.log(connection);
+});
 
 const schema = `
 CREATE TABLE IF NOT EXISTS users (
@@ -53,9 +51,7 @@ async function createSchema() {
 async function changeSchema() {
   await (await connection).execute(`
     ALTER TABLE users
-    DROP COLUMN robloxToken,
-    DROP COLUMN robloxRefreshToken,
-    DROP COLUMN robloxTokenExpires
+    MODIFY COLUMN robloxId BIGINT
   `);
 
   connection.end();
