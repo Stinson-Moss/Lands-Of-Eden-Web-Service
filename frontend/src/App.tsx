@@ -4,58 +4,71 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import { User } from './types/Session';
 import './App.css';
+
 const BACKEND_URL = process.env.REACT_APP_BACKEND_LINK || '';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get('code');
-    const state = new URLSearchParams(window.location.search).get('state');
-    window.history.replaceState({}, '', window.location.pathname);
-
-    const body = code? JSON.stringify({code: code}) : null;
-    let url = null;
-
-    if (state && state === 'roblox') {
-      url = `${BACKEND_URL}/auth/roblox`;
-    } else {
-      url = `${BACKEND_URL}/auth/getUser`;
-    }
-    
-    fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: body,
-      credentials: 'include',
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.user) {
-        setUser(data.user);
-      } else {
-        setUser(null);
+    const handleAuth = async () => {
+      const code = new URLSearchParams(window.location.search).get('code');
+      const state = new URLSearchParams(window.location.search).get('state');
+      
+      if (code || state) {
+        window.history.replaceState({}, '', window.location.pathname);
       }
-    })
-    .catch((e) => {
-      console.error('ERROR:', e)
-      setUser(null);
-    });
+
+      const body = code ? JSON.stringify({ code }) : null;
+      const url = state && state === 'roblox' 
+        ? `${BACKEND_URL}/auth/roblox`
+        : `${BACKEND_URL}/auth/getUser`;
+      
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+          credentials: 'include',
+        });
+        const data = await response.json();
+        
+        if (data.user) {
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      } catch (e) {
+        console.error('ERROR:', e);
+        setUser(null);
+      } finally {
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 300);
+      }
+    };
+
+    handleAuth();
   }, []);
-
-
 
   return (
     <Router>
-      <div className="app">
-        <Navbar user={user} setUser={setUser}/>
-        <Routes>
-          <Route path="/" element={<Home user={user} setUser={setUser} />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
+      <div className={`app ${isLoading ? 'loading' : ''}`}>
+        <Navbar 
+          user={user} 
+        setUser={setUser}
+      />
+      <Routes>
+        <Route 
+          path="/" 
+          element={<Home isLoading={isLoading} user={user} setUser={setUser} />} 
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </div>
     </Router>
   );
 };
 
-export default App; 
+export default App;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './Navbar.css';
-import logo from '../assets/logo.png';
+import logo from '../assets/eden.svg';
 import LoginWidget from './LoginWidget';
 import { User } from '../types/Session';
 
@@ -10,9 +10,9 @@ interface NavbarProps {
   setUser: (user: User | null) => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
+const Navbar: React.FC<NavbarProps> = ({ user, setUser}) => {
   return (
-    <nav className="navbar">
+    <nav className={`navbar`}>
       <div className="navContent">
         <div className="navLeft">
           <Link to="/" className="logo">
