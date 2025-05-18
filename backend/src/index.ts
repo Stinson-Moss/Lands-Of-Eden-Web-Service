@@ -364,7 +364,7 @@ app.post('/auth/roblox', async (req, res) => {
       },
     });
 
-    const { access_token} = tokenResponse.data;
+    const { access_token } = tokenResponse.data;
 
     const userResponse = await axios.get('https://apis.roblox.com/oauth/v1/userinfo', {
       headers: {
@@ -488,14 +488,12 @@ app.post('/unlink', async (req, res) => {
       updateFields.push(token, refreshToken, Math.floor(Date.now() / 1000 + SESSION_EXPIRATION))
     }
 
-    if (updateFields.length > 0) {
-      query = `UPDATE users SET 
-        ${sessionQuery}
-        ${robloxQuery}
-        WHERE token = ?`
-        
-        await pool.query(query, [...updateFields, token])
-    }
+    query = `UPDATE users SET 
+      ${sessionQuery}
+      ${robloxQuery}
+      WHERE token = ?`
+      
+    await pool.query(query, [...updateFields, token])
 
     res.cookie('session', JSON.stringify({token: token, refreshToken: refreshToken}), {
       httpOnly: true,

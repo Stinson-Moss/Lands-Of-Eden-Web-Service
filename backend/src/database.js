@@ -103,13 +103,27 @@ async function main() {
   await test();
 }
 
+async function printDatabase() {
+  let [rows] = await (await connection).execute(`
+    SELECT * FROM users
+  `);
+
+  console.log(JSON.stringify(rows));
+}
+
 // main().catch(err => {
 //   console.error(err);
 //   connection.end();
 // });
 
-changeSchema().catch(err => {
+// changeSchema().catch(err => {
+//   console.error(err);
+//   connection.end();
+// });
+
+printDatabase().catch(err => {
   console.error(err);
+}).finally(() => {
   connection.end();
 });
 
