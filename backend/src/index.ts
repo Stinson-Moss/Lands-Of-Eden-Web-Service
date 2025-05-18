@@ -474,7 +474,7 @@ app.post('/unlink', async (req, res) => {
 
     let query: string | null = null;
     let sessionQuery = '';
-    let robloxQuery = '';
+    let robloxQuery = 'robloxId = NULL';
     const updateFields = [];
 
     if (needsUpdate) {
