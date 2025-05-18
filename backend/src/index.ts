@@ -59,18 +59,6 @@ async function getDiscordInfo(token: string, refreshToken: string, expiresIn: nu
   };
 }
 
-async function getRobloxInfo(token: string) {
-  const userResponse = await axios.get('https://apis.roblox.com/oauth/v1/userinfo', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  return {
-    user: userResponse.data
-  }
-}
-
 async function getRobloxInfoWithKey(userid: number) {
   const userResponse = await axios.get(`https://apis.roblox.com/cloud/v2/users/${userid}`, {
     headers: {
@@ -168,7 +156,6 @@ app.post('/auth/getUser', async (req, res) => {
           discordRefreshToken = VALUES(discordRefreshToken),
           tokenExpires = VALUES(tokenExpires),
           discordTokenExpires = VALUES(discordTokenExpires),
-          robloxId = VALUES(robloxId)
       `
       await pool.query(query, [
         userResponse.data.id, 
