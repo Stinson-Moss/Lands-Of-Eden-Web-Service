@@ -155,7 +155,7 @@ app.post('/auth/getUser', async (req, res) => {
           discordToken = VALUES(discordToken),
           discordRefreshToken = VALUES(discordRefreshToken),
           tokenExpires = VALUES(tokenExpires),
-          discordTokenExpires = VALUES(discordTokenExpires),
+          discordTokenExpires = VALUES(discordTokenExpires)
       `
       await pool.query(query, [
         userResponse.data.id, 
