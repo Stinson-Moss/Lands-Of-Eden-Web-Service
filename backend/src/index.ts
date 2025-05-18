@@ -175,6 +175,11 @@ app.post('/auth/getUser', async (req, res) => {
         [userResponse.data.id])
 
       const queryObject = (rows as any[])[0]
+
+      if (!queryObject.token || !queryObject.refreshToken) {
+        return res.status(401).json({ error: 'Invalid token: Tokens not found' });
+      }
+
       let robloxInfo = queryObject.robloxId && queryObject.robloxId > 0? await getRobloxInfoWithKey(queryObject.robloxId) : null
 
       res.cookie('session', JSON.stringify({token: sessionData.token, refreshToken: sessionData.refreshToken}), {
@@ -210,6 +215,11 @@ app.post('/auth/getUser', async (req, res) => {
       console.log('SESSION:', session)
       session = JSON.parse(session);
       let { token, refreshToken } = session;
+      
+      if (!token || !refreshToken) {
+        return res.status(401).json({ error: 'Invalid token: Token or refresh token not found' });
+      }
+
       const [rows] = await pool.query('SELECT * FROM users WHERE token = ?', [token])
       
       if (!rows || (rows as any[]).length !== 1) {
@@ -217,6 +227,11 @@ app.post('/auth/getUser', async (req, res) => {
       }
   
       const queryObject = (rows as any[])[0]
+
+      if (!queryObject.token || !queryObject.refreshToken) {
+        return res.status(401).json({ error: 'Invalid token: Tokens not found' });
+      }
+
       let expiresIn = queryObject.tokenExpires;
       let needsUpdate = false;
   
@@ -312,6 +327,11 @@ app.post('/auth/roblox', async (req, res) => {
 
     session = JSON.parse(session);
     let { token, refreshToken } = session;
+
+    if (!token || !refreshToken) {
+      return res.status(401).json({ error: 'Invalid token: Token or refresh token not found' });
+    }
+
     let expiresIn = null;
     let needsUpdate = false;
 
@@ -321,6 +341,11 @@ app.post('/auth/roblox', async (req, res) => {
     }
 
     const queryObject = (rows as any[])[0]
+
+    if (!queryObject.token || !queryObject.refreshToken) {
+      return res.status(401).json({ error: 'Invalid token: Tokens not found' });
+    }
+
     const discordInfo = await getDiscordInfo(queryObject.discordToken, queryObject.discordRefreshToken, queryObject.discordTokenExpires)
     expiresIn = queryObject.tokenExpires;
 
@@ -418,6 +443,38 @@ app.post('/auth/roblox', async (req, res) => {
 });
 
 app.post('/logout', async (req, res) => {
+  const session = req.cookies.session;
+
+  if (!session) {
+    return res.status(401).json({ error: 'No login session found' });
+  }
+
+  let {token, refreshToken} = JSON.parse(session);
+
+  if (!token || !refreshToken) {
+    return res.status(401).json({ error: 'No login tokens found' });
+  }
+
+  const [rows] = await pool.query(`
+    SELECT * FROM users WHERE token = ?
+    `, [token])
+
+  if ((rows as any[]).length !== 1) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+
+  const queryObject = (rows as any[])[0]
+
+  if (!queryObject.token || !queryObject.refreshToken) {
+    return res.status(401).json({ error: 'Invalid token: Tokens not found' });
+  }
+  
+  await pool.query(`
+    UPDATE users
+    SET token = NULL, refreshToken = NULL, tokenExpires = NULL
+    WHERE token = ?
+  `, [token]);
+
   res.clearCookie('session', {
     httpOnly: true,
     secure: true,
@@ -452,6 +509,11 @@ app.post('/unlink', async (req, res) => {
     }
 
     const queryObject = (rows as any[])[0]
+
+    if (!queryObject.token || !queryObject.refreshToken) {
+      return res.status(401).json({ error: 'Invalid token: Tokens not found' });
+    }
+
     let needsUpdate = false;
 
     if (queryObject.tokenExpires < Date.now() / 1000) {

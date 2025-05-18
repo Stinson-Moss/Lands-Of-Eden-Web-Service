@@ -26,13 +26,13 @@ const schema = `
 CREATE TABLE IF NOT EXISTS users (
   discordId VARCHAR(255) NOT NULL,
   robloxId VARCHAR(255) NOT NULL,
-  token VARCHAR(255) NOT NULL,
+  token VARCHAR(255),
   discordToken VARCHAR(255) NOT NULL,
   robloxToken TEXT,
-  refreshToken VARCHAR(255) NOT NULL,
+  refreshToken VARCHAR(255),
   discordRefreshToken VARCHAR(255) NOT NULL,
   robloxRefreshToken TEXT,
-  tokenExpires BIGINT NOT NULL,
+  tokenExpires BIGINT,
   discordTokenExpires BIGINT NOT NULL,
   robloxTokenExpires BIGINT,
 
@@ -51,7 +51,9 @@ async function createSchema() {
 async function changeSchema() {
   await (await connection).execute(`
     ALTER TABLE users
-    MODIFY COLUMN robloxId BIGINT
+    MODIFY COLUMN tokenExpires BIGINT,
+    MODIFY COLUMN token VARCHAR(255),
+    MODIFY COLUMN refreshToken VARCHAR(255)
   `);
 
   connection.end();
@@ -116,14 +118,14 @@ async function printDatabase() {
 //   connection.end();
 // });
 
-// changeSchema().catch(err => {
-//   console.error(err);
-//   connection.end();
-// });
-
-printDatabase().catch(err => {
+changeSchema().catch(err => {
   console.error(err);
-}).finally(() => {
   connection.end();
 });
+
+// printDatabase().catch(err => {
+//   console.error(err);
+// }).finally(() => {
+//   connection.end();
+// });
 
