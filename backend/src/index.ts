@@ -256,18 +256,18 @@ app.post('/auth/getUser', async (req, res) => {
       const updateFields = [];
   
       if (needsUpdate) {
-        sessionQuery = `token = ?, refreshToken = ?, tokenExpires = ?,`
+        sessionQuery = `token = ?, refreshToken = ?, tokenExpires = ?`
         updateFields.push(token, refreshToken, Math.floor(Date.now() / 1000 + SESSION_EXPIRATION))
       }
   
       if (discordInfo.token !== queryObject.discordToken) {
-        discordQuery = `discordToken = ?, discordRefreshToken = ?, discordTokenExpires = ?,`
+        discordQuery = `discordToken = ?, discordRefreshToken = ?, discordTokenExpires = ?`
         updateFields.push(discordInfo.token, discordInfo.refreshToken, discordInfo.expiresIn)
       }
       // Combine all the queries
       if (updateFields.length > 0) {
         query = `UPDATE users SET 
-          ${sessionQuery}
+          ${sessionQuery}${discordQuery.length > 0 ? `,` : ''}
           ${discordQuery}
           WHERE token = ?`;
         
