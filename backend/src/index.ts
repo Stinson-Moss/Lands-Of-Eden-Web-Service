@@ -665,11 +665,11 @@ app.get('/ping', (req, res) => {
 })
 
 app.get('/api/servers', async (req, res) => {
-
-  let [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [req.cookies.session])
+  const session = JSON.parse(req.cookies.session);
+  
+  let [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [session.token])
   let queryObject = (rows as any[])[0]
-
-  const session = req.cookies.session;
+  
   const sessionResponse = await verifySession(session, queryObject);
 
   if (!sessionResponse.verified) {
