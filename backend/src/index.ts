@@ -50,12 +50,14 @@ async function verifySession(session: any | null, data : any | null) {
   }
   
   if (!session) {
+    console.log('No session found')
     return response;
   }
 
   const { token, refreshToken } = JSON.parse(session);
 
   if (!token || !refreshToken) {
+    console.log('No token or refresh token found')
     return response;
   }
 
@@ -67,6 +69,7 @@ async function verifySession(session: any | null, data : any | null) {
     const [rows] = await Database.query('SELECT token, refreshToken, tokenExpires FROM users WHERE token = ?', [token])
     
     if (!rows || (rows as any[]).length !== 1) {
+      console.log('No rows found')
       return response;
     }
     
@@ -74,11 +77,13 @@ async function verifySession(session: any | null, data : any | null) {
   }
 
   if (!queryObject.token || !queryObject.refreshToken) {
+    console.log('No token or refresh token found')
     return response;
   }
 
   if (queryObject.tokenExpires < Date.now() / 1000) {
     if (queryObject.refreshToken !== refreshToken) {
+      console.log('Refresh token mismatch')
       return response;
     }
 
@@ -87,6 +92,7 @@ async function verifySession(session: any | null, data : any | null) {
     response.data = sessionData;
     response.verified = true;
 
+    console.log('Session needs update')
     return response;
   }
 
@@ -97,6 +103,8 @@ async function verifySession(session: any | null, data : any | null) {
     refreshToken: queryObject.refreshToken,
     expiresIn: queryObject.tokenExpires
   }
+
+  console.log('Session verified')
   return response;
 }
 
@@ -190,7 +198,7 @@ const app = express();
 app.use(cors({
   origin: REDIRECT_URI,
   allowedHeaders: ['Content-Type', 'Authorization'],
-  methods: ['GET','POST', 'OPTIONS'],
+  methods: ['GET', 'POST', 'OPTIONS'],
   credentials: true,
 }));
 app.use(express.json());
