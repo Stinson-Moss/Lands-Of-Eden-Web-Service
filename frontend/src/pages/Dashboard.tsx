@@ -36,7 +36,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       try {
 
         // TODO: CSRF protection
-        const serverResponse = await fetch(`${BACKEND_URL}/api/servers`);
+        const serverResponse = await fetch(`${BACKEND_URL}/api/servers`, {
+          credentials: 'include'
+        });
         const mutualServers = await serverResponse.json();
 
         setServers(mutualServers);
@@ -60,7 +62,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       try {
         // TODO: CSRF protection
         // Get binding settings for selected server
-        const bindingsResponse = await fetch(`${BACKEND_URL}/api/bindings/${selectedServer.id}`);
+        const bindingsResponse = await fetch(`${BACKEND_URL}/api/bindings/${selectedServer.id}`, {
+          credentials: 'include'
+        });
         const bindingsData = await bindingsResponse.json();
 
         // Bindings are separated by group name, so we need to get the group data from each binding key
@@ -70,7 +74,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           if (groupList[groupName]) {
             fetchedGroups.push(groupList[groupName]);
           } else {
-            const groupResponse = await fetch(`${BACKEND_URL}/api/group/${groupName}`);
+            const groupResponse = await fetch(`${BACKEND_URL}/api/group/${groupName}`, {
+              credentials: 'include'
+            });
             const groupData = await groupResponse.json();
             groupList[groupName] = groupData;
             fetchedGroups.push(groupData);
@@ -147,6 +153,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       await fetch(`${BACKEND_URL}/api/bindings/${selectedServer?.id}`, {
         method: 'POST',
         body: JSON.stringify(bindings),
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         }
