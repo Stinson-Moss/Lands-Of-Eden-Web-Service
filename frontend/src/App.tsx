@@ -28,6 +28,10 @@ const App: React.FC = () => {
         window.history.replaceState({}, '', window.location.pathname);
       }
 
+      console.log('CODE:', code)
+      console.log('DOMAIN:', domain)
+      console.log('CSRF:', csrf)
+
       const body = code ? JSON.stringify({ code }) : null;
       const url = domain && domain === 'roblox' 
         ? `${BACKEND_URL}/auth/roblox`
