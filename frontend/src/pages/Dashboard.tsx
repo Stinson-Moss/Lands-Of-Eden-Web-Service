@@ -63,6 +63,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         // TODO: CSRF protection
         // Get binding settings for selected server
         const bindingsResponse = await fetch(`${BACKEND_URL}/api/bindings/${selectedServer.id}`, {
+          method: 'GET',
           credentials: 'include'
         });
         const bindingsData = await bindingsResponse.json();

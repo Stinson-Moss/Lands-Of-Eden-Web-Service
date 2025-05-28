@@ -38,7 +38,7 @@ interface sessionResponse {
   }
 }
 
-async function verifySession(session: any | null, data : any | null) {
+async function verifySession(session: string | null, data : any | null) {
   let response: sessionResponse = {
     verified: false,
     needsUpdate: false,
@@ -54,7 +54,9 @@ async function verifySession(session: any | null, data : any | null) {
     return response;
   }
 
-  const { token, refreshToken } = session;
+  console.log('SESSION:', session)
+
+  const { token, refreshToken } = JSON.parse(session);
 
   if (!token || !refreshToken) {
     console.log('No token or refresh token found')
@@ -315,8 +317,6 @@ app.post('/auth/getUser', async (req, res) => {
   } else if (session) {
 
     try {
-
-      console.log('SESSION:', session)
       session = JSON.parse(session);
       let { token, refreshToken } = session;
       
@@ -671,9 +671,9 @@ app.get('/ping', (req, res) => {
 })
 
 app.get('/api/servers', async (req, res) => {
-  const session = JSON.parse(req.cookies.session);
+  const session = req.cookies.session;
   
-  let [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [session.token])
+  let [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [JSON.parse(session).token])
   let queryObject = (rows as any[])[0]
   
   const sessionResponse = await verifySession(session, queryObject);
@@ -818,9 +818,7 @@ app.get('/api/bindings/:serverId', async (req, res) => {
   res.json(bindingsData)
 })
 app.post('/api/bindings/:serverId', async (req, res) => {
-
   const session = req.cookies.session;
-  console.log('SESSION:', session)
   const sessionResponse = await verifySession(session, null);
 
   if (!sessionResponse.verified) {
