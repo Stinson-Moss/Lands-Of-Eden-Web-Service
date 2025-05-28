@@ -123,6 +123,7 @@ async function getDiscordGuilds(token: string, discordId: string) {
     }
   })
 
+  console.log('USER RESPONSE:', userResponse.data)
   const userGuilds = userResponse.data;
   const guilds = clientGuilds?.filter(async (guild) => {
     if (userGuilds.has(guild.id)) {
@@ -728,6 +729,7 @@ app.get('/api/group/:name', async (req, res) => {
     return res.status(400).json({ error: 'No group name provided' });
   }
 
+  console.log('GROUP NAME:', groupName)
   const group = groups[groupName as keyof typeof groups];
 
   if (!group) {
@@ -756,6 +758,8 @@ app.get('/api/roles/:serverId', async (req, res) => {
     return res.status(404).json({ error: 'Server not found' });
   }
 
+  console.log('SERVER:', server)
+
   const roles = server.roles.cache.map(role => {
     return {
       id: role.id,
@@ -772,6 +776,7 @@ app.get('/api/roles/:serverId', async (req, res) => {
 app.post('/api/bindings/:serverId', async (req, res) => {
 
   const session = req.cookies.session;
+  console.log('SESSION:', session)
   const sessionResponse = await verifySession(session, null);
 
   if (!sessionResponse.verified) {
@@ -779,6 +784,7 @@ app.post('/api/bindings/:serverId', async (req, res) => {
   }
 
   const serverId = req.params.serverId;
+  console.log('SERVER ID:', serverId)
 
   if (!serverId) {
     return res.status(400).json({ error: 'No server ID provided' });
@@ -793,7 +799,8 @@ app.post('/api/bindings/:serverId', async (req, res) => {
   }
 
   const bindings: {[key: string]: {rank: number, operator: string, secondaryRank?: number, roles: string[]}} = JSON.parse(req.body);
-  
+  console.log('BINDINGS:', bindings)
+
   // check if the bindings are valid
   for (const [groupName, binding] of Object.entries(bindings)) {
     const group = groups[groupName as keyof typeof groups];
@@ -831,6 +838,8 @@ app.post('/api/bindings/:serverId', async (req, res) => {
       return res.status(400).json({ error: 'Invalid rank' });
     }
   }
+
+  console.log('BINDINGS ARE VALID')
 
   try {
 
