@@ -117,26 +117,31 @@ function generateSessionData() {
 async function getDiscordGuilds(token: string, discordId: string) {
   let clientGuilds = DiscordClient.client?.guilds.cache;
 
-  const userResponse = await axios.get('https://discord.com/api/users/@me/guilds', {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  })
-
-  console.log('USER RESPONSE:', userResponse.data)
-  const userGuilds = userResponse.data;
-  const guilds = clientGuilds?.filter(async (guild) => {
-    if (userGuilds.has(guild.id)) {
-      const member = guild.members.cache.get(discordId) ?? await guild.members.fetch(discordId);
-      if (member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
-        return true;
+  try {
+    const userResponse = await axios.get('https://discord.com/api/users/@me/guilds', {
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
-    }
+    })
 
-    return false;
-  });
+    // console.log('USER RESPONSE:', userResponse.data)
+    const userGuilds: Guild[] = userResponse.data;
+    const guilds = clientGuilds?.filter(async (guild) => {
+      if (userGuilds.some(g => g.id === guild.id)) {
+        const member = guild.members.cache.get(discordId) ?? await guild.members.fetch(discordId);
+        if (member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
+          return true;
+        }
+      }
 
-  return guilds;
+      return false;
+    });
+
+    return guilds;
+  } catch (error) {
+    console.error('Error getting discord guilds:', error);
+    return null;
+  }
 }
 
 async function getDiscordInfo(token: string, refreshToken: string, expiresIn: number) {
@@ -680,6 +685,10 @@ app.get('/api/servers', async (req, res) => {
   try {
 
     const discordGuilds = await getDiscordGuilds(queryObject.discordToken, queryObject.discordId);
+
+    if (!discordGuilds) {
+      return res.status(500).json({ error: 'Failed to get discord guilds' });
+    }
     
     if (sessionResponse.needsUpdate) {
       // save the new session data
