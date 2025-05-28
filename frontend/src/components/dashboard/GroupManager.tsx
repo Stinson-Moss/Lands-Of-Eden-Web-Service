@@ -45,7 +45,6 @@ const GroupManager: React.FC<GroupManagerProps> = ({
     setSearchError(null);
 
     try {
-      // In a real app, this would be an API call to search for the group
       const foundGroup = await fetch(`${BACKEND_URL}/api/group/${groupIdInput}`);
       const foundGroupData = await foundGroup.json();
 
