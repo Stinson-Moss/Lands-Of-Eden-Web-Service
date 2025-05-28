@@ -201,6 +201,8 @@ app.post('/auth/getUser', async (req, res) => {
   const { code, csrf } = req.body;
   let session = req.cookies.session;
 
+  console.log('CODE:', code)
+
   if (code) {
 
     try {
