@@ -9,6 +9,9 @@ interface ServerSelectorProps {
   isLoading: boolean;
 }
 
+function guildIcon(icon: string, id: string) {
+  return `https://cdn.discordapp.com/icons/${id}/${icon}.png?size=128`;
+}
 const ServerSelector: React.FC<ServerSelectorProps> = ({
   servers,
   selectedServer,
@@ -73,7 +76,7 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({
             >
               <div className="server-icon">
                 {server.icon ? (
-                  <img src={server.icon} alt={`${server.name} icon`} />
+                  <img src={guildIcon(server.icon, server.id)} alt={`${server.name} icon`} />
                 ) : (
                   <div className="server-icon-placeholder">
                     {server.name.charAt(0)}
