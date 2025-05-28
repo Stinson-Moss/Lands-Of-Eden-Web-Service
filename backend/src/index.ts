@@ -796,16 +796,23 @@ app.get('/api/bindings/:serverId', async (req, res) => {
   }
   
 
-  const [rows] = await Database.query('SELECT * FROM bindings WHERE serverId = ?', [serverId])
-  const bindings = (rows as any[])[0]
-  const bindingsData = JSON.parse(bindings.bindingSettings)
+  const [rows] = await Database.query('SELECT * FROM bindings WHERE serverId = ?', [serverId]);
+  let bindings = (rows as any[])[0];
+
+  if (!bindings) {
+    bindings = {
+      serverId: serverId,
+      bindingSettings: {}
+    }
+  }
+
 
   if (sessionResponse.needsUpdate) {
     Database.query(`
       UPDATE users
       SET token = ?, refreshToken = ?, tokenExpires = ?
       WHERE token = ?
-    `, [sessionResponse.data.token, sessionResponse.data.refreshToken, sessionResponse.data.expiresIn, session])
+    `, [sessionResponse.data.token, sessionResponse.data.refreshToken, sessionResponse.data.expiresIn, session]);
 
     res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
       httpOnly: true,
@@ -815,8 +822,9 @@ app.get('/api/bindings/:serverId', async (req, res) => {
     });
   }
 
-  res.json(bindingsData)
+  res.json(bindings.bindingSettings);
 })
+
 app.post('/api/bindings/:serverId', async (req, res) => {
   const session = req.cookies.session;
   const sessionResponse = await verifySession(session, null);
