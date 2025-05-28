@@ -796,33 +796,37 @@ app.get('/api/bindings/:serverId', async (req, res) => {
   }
   
 
-  const [rows] = await Database.query('SELECT * FROM bindings WHERE serverId = ?', [serverId]);
-  let bindings = (rows as any[])[0];
+  try {
+    const [rows] = await Database.query('SELECT * FROM bindings WHERE serverId = ?', [serverId]);
+    let bindings = (rows as any[])[0];
 
-  if (!bindings) {
-    bindings = {
-      serverId: serverId,
-      bindingSettings: {}
+    if (!bindings) {
+      bindings = {
+        serverId: serverId,
+        bindingSettings: {}
+      }
     }
+
+    if (sessionResponse.needsUpdate) {
+      Database.query(`
+        UPDATE users
+        SET token = ?, refreshToken = ?, tokenExpires = ?
+        WHERE token = ?
+      `, [sessionResponse.data.token, sessionResponse.data.refreshToken, sessionResponse.data.expiresIn, session]);
+  
+      res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
+        httpOnly: true,
+        secure: true,
+        maxAge: COOKIE_EXPIRATION,
+        sameSite: 'none',
+      });
+    }
+  
+    res.json(bindings.bindingSettings);
+  } catch (error) {
+    console.error('Error fetching bindings:', error);
+    return res.status(500).json({ error: 'Failed to fetch bindings' });
   }
-
-
-  if (sessionResponse.needsUpdate) {
-    Database.query(`
-      UPDATE users
-      SET token = ?, refreshToken = ?, tokenExpires = ?
-      WHERE token = ?
-    `, [sessionResponse.data.token, sessionResponse.data.refreshToken, sessionResponse.data.expiresIn, session]);
-
-    res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
-      httpOnly: true,
-      secure: true,
-      maxAge: COOKIE_EXPIRATION,
-      sameSite: 'none',
-    });
-  }
-
-  res.json(bindings.bindingSettings);
 })
 
 app.post('/api/bindings/:serverId', async (req, res) => {
