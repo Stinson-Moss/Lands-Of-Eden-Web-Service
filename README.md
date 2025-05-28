@@ -1,7 +1,7 @@
-# Eden - Cross-Platform Identity Management System
+# Eden - Official Lands Of Eden Website
 
 ## Overview
-Eden is a full-stack application that implements secure cross-platform identity management between Discord and Roblox platforms. The system provides a seamless Single Sign-On (SSO) experience while maintaining high-level security standards.
+[Eden](https://eden-z047.onrender.com/) is a full-stack application that implements secure cross-platform identity management between Discord and Roblox platforms. The system provides a seamless Single Sign-On (SSO) experience while maintaining high-level security standards.
 
 ![Eden Logo](frontend/src/assets/eden.svg)
 
@@ -31,6 +31,8 @@ Eden is a full-stack application that implements secure cross-platform identity 
 - [x] Secure logout and account unlinking functionality
 - [ ] CSRF Protection (in development)
 - [ ] Rate limiting (planned)
+- [ ] Group management dashboard
+- [ ] Discord Server settings panel
 
 ### User Interface
 - [x] Modern, responsive dark-themed design

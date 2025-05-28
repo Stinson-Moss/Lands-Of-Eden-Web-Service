@@ -2,10 +2,20 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import axios from 'axios';
-import mysql from 'mysql2/promise';
 import crypto from 'crypto';
 import fs from 'fs';
 import cookieParser from 'cookie-parser';
+import path from 'node:path';
+import { Collection, Client, GatewayIntentBits, PermissionsBitField, Guild } from 'discord.js';
+import groups from './utility/groups.json'
+import DiscordClient from './classes/discordclient';
+import Database from './classes/database';
+
+declare module 'discord.js' {
+  interface Client {
+    commands: Collection<string, any>;
+  }
+}
 
 dotenv.config();
 
@@ -18,10 +28,106 @@ const ROBLOX_API_KEY = process.env.ROBLOX_API_KEY;
 const SESSION_EXPIRATION = 600; // 10 minutes in seconds
 const COOKIE_EXPIRATION = 365 * 24 * 60 * 60 * 1000;
 
+interface sessionResponse {
+  verified: boolean;
+  needsUpdate: boolean;
+  data: {
+    token: string;
+    refreshToken: string;
+    expiresIn: number;
+  }
+}
+
+async function verifySession(session: any | null, data : any | null) {
+  let response: sessionResponse = {
+    verified: false,
+    needsUpdate: false,
+    data: {
+      token: '',
+      refreshToken: '',
+      expiresIn: 0
+    }
+  }
+  
+  if (!session) {
+    return response;
+  }
+
+  const { token, refreshToken } = JSON.parse(session);
+
+  if (!token || !refreshToken) {
+    return response;
+  }
+
+  let queryObject;
+
+  if (data) {
+    queryObject = data;
+  } else {
+    const [rows] = await Database.query('SELECT token, refreshToken, tokenExpires FROM users WHERE token = ?', [token])
+    
+    if (!rows || (rows as any[]).length !== 1) {
+      return response;
+    }
+    
+    queryObject = (rows as any[])[0]
+  }
+
+  if (!queryObject.token || !queryObject.refreshToken) {
+    return response;
+  }
+
+  if (queryObject.tokenExpires < Date.now() / 1000) {
+    if (queryObject.refreshToken !== refreshToken) {
+      return response;
+    }
+
+    const sessionData = generateSessionData();
+    response.needsUpdate = true;
+    response.data = sessionData;
+    response.verified = true;
+
+    return response;
+  }
+
+  response.verified = true;
+  response.needsUpdate = false;
+  response.data = {
+    token: queryObject.token,
+    refreshToken: queryObject.refreshToken,
+    expiresIn: queryObject.tokenExpires
+  }
+  return response;
+}
+
 function generateSessionData() {
   const access_token = crypto.randomBytes(32).toString('hex');
   const refresh_token = crypto.randomBytes(32).toString('hex');
   return { token: access_token, refreshToken: refresh_token, expiresIn: Date.now() / 1000 + SESSION_EXPIRATION };
+}
+
+async function getDiscordGuilds(token: string, discordId: string) {
+  let clientGuilds = DiscordClient.client?.guilds.cache;
+
+  const userResponse = await axios.get('https://discord.com/api/users/@me/guilds', {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  })
+
+  const userGuilds = userResponse.data;
+  const guilds = clientGuilds?.filter(async (guild) => {
+    if (userGuilds.has(guild.id)) {
+      const member = guild.members.cache.get(discordId) ?? await guild.members.fetch(discordId);
+      if (member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        return true;
+      }
+    }
+
+    return false;
+  });
+
+  return guilds;
 }
 
 async function getDiscordInfo(token: string, refreshToken: string, expiresIn: number) {
@@ -80,25 +186,6 @@ async function getRobloxInfoWithKey(userid: number) {
   }
 }
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 0,
-  port: parseInt(process.env.DB_PORT || '3306'),
-
-  ssl: {
-    ca: fs.readFileSync(process.env.DB_CA || ''),
-    rejectUnauthorized: true
-  }
-  
-})
-
 const app = express();
 app.use(cors({
   origin: REDIRECT_URI,
@@ -111,10 +198,11 @@ app.use(cookieParser());
 
 // Discord Auth
 app.post('/auth/getUser', async (req, res) => {
-  const { code } = req.body;
+  const { code, csrf } = req.body;
   let session = req.cookies.session;
 
   if (code) {
+
     try {
       const tokenResponse = await axios.post('https://discord.com/api/oauth2/token', 
         new URLSearchParams({
@@ -157,7 +245,7 @@ app.post('/auth/getUser', async (req, res) => {
           tokenExpires = VALUES(tokenExpires),
           discordTokenExpires = VALUES(discordTokenExpires)
       `
-      await pool.query(query, [
+      await Database.query(query, [
         userResponse.data.id, 
         sessionData.token, 
         sessionData.refreshToken, 
@@ -168,7 +256,7 @@ app.post('/auth/getUser', async (req, res) => {
         null
       ])
 
-      const [rows] = await pool.query(`
+      const [rows] = await Database.query(`
         SELECT * 
         FROM users 
         WHERE discordId = ?`, 
@@ -220,7 +308,7 @@ app.post('/auth/getUser', async (req, res) => {
         return res.status(401).json({ error: 'Invalid token: Token or refresh token not found' });
       }
 
-      const [rows] = await pool.query('SELECT * FROM users WHERE token = ?', [token])
+      const [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [token])
       
       if (!rows || (rows as any[]).length !== 1) {
         return res.status(401).json({ error: 'Invalid token: Token not found' });
@@ -271,7 +359,7 @@ app.post('/auth/getUser', async (req, res) => {
           ${discordQuery}
           WHERE token = ?`;
         
-        await pool.query(query, [
+        await Database.query(query, [
           ...updateFields,
           queryObject.token
         ]);
@@ -335,7 +423,7 @@ app.post('/auth/roblox', async (req, res) => {
     let expiresIn = null;
     let needsUpdate = false;
 
-    const [rows] = await pool.query('SELECT * FROM users WHERE token = ?', [token])
+    const [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [token])
     if ((rows as any[]).length !== 1) {
       return res.status(401).json({ error: 'Invalid token' });
     }
@@ -411,7 +499,7 @@ app.post('/auth/roblox', async (req, res) => {
         ${robloxQuery}
         WHERE token = ?`;
         
-        await pool.query(query, [...updateFields, token])
+        await Database.query(query, [...updateFields, token])
     }
 
     res.cookie('session', JSON.stringify({token: token, refreshToken: refreshToken}), {
@@ -455,7 +543,7 @@ app.post('/logout', async (req, res) => {
     return res.status(401).json({ error: 'No login tokens found' });
   }
 
-  const [rows] = await pool.query(`
+  const [rows] = await Database.query(`
     SELECT * FROM users WHERE token = ?
     `, [token])
 
@@ -469,7 +557,7 @@ app.post('/logout', async (req, res) => {
     return res.status(401).json({ error: 'Invalid token: Tokens not found' });
   }
   
-  await pool.query(`
+  await Database.query(`
     UPDATE users
     SET token = NULL, refreshToken = NULL, tokenExpires = NULL
     WHERE token = ?
@@ -500,7 +588,7 @@ app.post('/unlink', async (req, res) => {
       return res.status(401).json({ error: 'No login tokens found' });
     }
 
-    const [rows] = await pool.query(`
+    const [rows] = await Database.query(`
       SELECT * FROM users WHERE token = ?
       `, [token])
 
@@ -542,7 +630,7 @@ app.post('/unlink', async (req, res) => {
       ${robloxQuery}
       WHERE token = ?`
       
-    await pool.query(query, [...updateFields, token])
+    await Database.query(query, [...updateFields, token])
 
     res.cookie('session', JSON.stringify({token: token, refreshToken: refreshToken}), {
       httpOnly: true,
@@ -560,7 +648,267 @@ app.post('/unlink', async (req, res) => {
   }
 })
 
+app.get('/ping', (req, res) => {
+  res.json({
+    success: true
+  })
+})
+
+app.get('/api/servers', async (req, res) => {
+
+  let [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [req.cookies.session])
+  let queryObject = (rows as any[])[0]
+
+  const session = req.cookies.session;
+  const sessionResponse = await verifySession(session, queryObject);
+
+  if (!sessionResponse.verified) {
+    return res.status(401).json({ error: 'Invalid session' });
+  }
+
+  try {
+
+    const discordGuilds = await getDiscordGuilds(queryObject.discordToken, queryObject.discordId);
+    
+    if (sessionResponse.needsUpdate) {
+      // save the new session data
+      Database.query(`
+        UPDATE users
+        SET token = ?, refreshToken = ?, tokenExpires = ?
+        WHERE token = ?
+      `, [sessionResponse.data.token, sessionResponse.data.refreshToken, sessionResponse.data.expiresIn, queryObject.token])
+      
+      res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
+        httpOnly: true,
+        secure: true,
+        maxAge: COOKIE_EXPIRATION,
+        sameSite: 'none',
+      });
+    }
+    
+    res.json({
+      guilds: discordGuilds.map(guild => {
+        return {
+          id: guild.id,
+          name: guild.name,
+          icon: guild.icon,
+          memberCount: guild.memberCount,
+          roles: guild.roles.cache.map(role => {
+            return {
+              id: role.id,
+              name: role.name,
+              color: role.color,
+              position: role.position
+            }
+          })
+        }
+      })
+    })
+    
+  } catch (error) {
+    console.error('Error fetching guilds:', error);
+    res.status(500).json({ error: 'Failed to fetch guilds' });
+  }
+})
+
+app.get('/api/group/:name', async (req, res) => {
+  const groupName = req.params.name;
+
+  if (!groupName) {
+    return res.status(400).json({ error: 'No group name provided' });
+  }
+
+  const group = groups[groupName as keyof typeof groups];
+
+  if (!group) {
+    return res.status(404).json({ error: 'Group not found' });
+  }
+
+  res.json(group);
+})
+
+app.get('/api/groups', async (req, res) => {
+  res.json(groups);
+})
+
+app.get('/api/roles/:serverId', async (req, res) => {
+  const serverId = req.params.serverId;
+
+  if (!serverId) {
+    return res.status(400).json({ error: 'No server ID provided' });
+  }
+
+  const client = DiscordClient.client;
+
+  const server: Guild = client?.guilds.cache.get(serverId) ?? await client?.guilds.fetch(serverId);
+
+  if (!server) {
+    return res.status(404).json({ error: 'Server not found' });
+  }
+
+  const roles = server.roles.cache.map(role => {
+    return {
+      id: role.id,
+      name: role.name,
+      color: role.color,
+      position: role.position
+    }
+  })
+
+  res.json(roles)
+
+})
+
+app.post('/api/bindings/:serverId', async (req, res) => {
+
+  const session = req.cookies.session;
+  const sessionResponse = await verifySession(session, null);
+
+  if (!sessionResponse.verified) {
+    return res.status(401).json({ error: 'Invalid session' });
+  }
+
+  const serverId = req.params.serverId;
+
+  if (!serverId) {
+    return res.status(400).json({ error: 'No server ID provided' });
+  }
+
+  if (!req.body) {
+    return res.status(400).json({ error: 'No body provided' });
+  }
+
+  if (!DiscordClient.client.guilds.cache.get(serverId)) {
+    return res.status(404).json({ error: 'Server not found' });
+  }
+
+  const bindings: {[key: string]: {rank: number, operator: string, secondaryRank?: number, roles: string[]}} = JSON.parse(req.body);
+  
+  // check if the bindings are valid
+  for (const [groupName, binding] of Object.entries(bindings)) {
+    const group = groups[groupName as keyof typeof groups];
+
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    if (!groupName || !binding.roles || !binding.rank || !binding.operator) {
+      return res.status(400).json({ error: 'Invalid binding' });
+    }
+
+    if (binding.operator !== '>=' && binding.operator !== '<=' && binding.operator !== '=' && binding.operator !== 'between') {
+      return res.status(400).json({ error: 'Invalid operator' });
+    }
+    
+    if (binding.operator === 'between' && !binding.secondaryRank) {
+      return res.status(400).json({ error: 'Secondary rank is required for between operator' });
+    }
+
+    if (binding.operator !== 'between' && binding.secondaryRank) {
+      return res.status(400).json({ error: 'Secondary rank is only allowed for between operator' });
+    }
+
+    if (binding.operator === 'between' && binding.secondaryRank! <= binding.rank) {
+      return res.status(400).json({ error: 'Secondary rank must be greater than primary rank' });
+    }
+
+    if (binding.operator === 'between' && binding.secondaryRank! > 100) {
+      return res.status(400).json({ error: 'Secondary rank must be less than 100' });
+    }
+
+    const groupRankCount = Object.keys(group.Ranks).length;
+    if (binding.rank > groupRankCount || binding.secondaryRank! > groupRankCount || binding.rank < 1 || binding.secondaryRank! < 1) {
+      return res.status(400).json({ error: 'Invalid rank' });
+    }
+  }
+
+  try {
+
+    // save binding
+    await Database.query(`
+      INSERT INTO bindings (serverId, bindingSettings)
+      VALUES (?, ?)
+    `, [serverId, JSON.stringify(bindings)]);
+
+    if (sessionResponse.needsUpdate) {
+      Database.query(`
+        UPDATE users
+        SET token = ?, refreshToken = ?, tokenExpires = ?
+        WHERE token = ?
+      `, [sessionResponse.data.token, sessionResponse.data.refreshToken, sessionResponse.data.expiresIn, session])
+    }
+
+    res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
+      httpOnly: true,
+      secure: true,
+      maxAge: COOKIE_EXPIRATION,
+      sameSite: 'none',
+    });
+
+    res.json({ success: true })
+  } catch (error) {
+    console.error('Error saving binding:', error);
+    res.status(500).json({ error: 'Failed to save binding' });
+  }
+})
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 }); 
+
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+client.commands = new Collection();
+
+console.log('Starting bot...');
+
+// commands
+const cmdFoldersPath = path.join(__dirname, 'commands');
+const cmdFolders = fs.readdirSync(cmdFoldersPath);
+
+for (const folder of cmdFolders) {
+    const cmdPath = path.join(cmdFoldersPath, folder);
+    const cmdFiles = fs.readdirSync(cmdPath).filter(file => file.endsWith('.ts'));
+
+    for (const file of cmdFiles) {
+        const filePath = path.join(cmdPath, file);
+        console.log(`Loading command: ${filePath}`);
+        const command = require(filePath);
+
+        if ('data' in command && 'execute' in command) {
+            client.commands.set(command.data.name, command);
+            console.log(`Loaded command: ${command.data.name}`);
+        } else {
+            console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+        }
+    }
+}
+
+// Event handlers
+const eventFolder = path.join(__dirname, 'events');
+const eventFiles = fs.readdirSync(eventFolder).filter(file => file.endsWith('.ts'));
+
+for (const file of eventFiles) {
+    const filePath = path.join(eventFolder, file);
+    console.log(`Loading event: ${filePath}`);
+    const event = require(filePath);
+
+    if (event.once) {
+        client.once(event.name, (...args) => event.execute(...args));
+    } else {
+        client.on(event.name, (...args) => event.execute(...args));
+    }
+    console.log(`Loaded event: ${event.name}`);
+}
+
+// Set the client
+client.once('ready', () => {
+    console.log('Bot is ready!');
+    DiscordClient.setClient(client);
+});
+
+client.login(process.env.DISCORD_TOKEN).catch(error => {
+    console.error('Error logging in:', error);
+});
+
+

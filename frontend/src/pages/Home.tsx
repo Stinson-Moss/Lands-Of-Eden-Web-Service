@@ -4,6 +4,7 @@ import logo from '../assets/eden.svg';
 import discordIcon from '../assets/discord-icon.svg';
 import AccountsWidget from '../components/AccountsWidget';
 import { User } from '../types/Session';
+import Tokens from '../classes/Tokens'
 
 interface HomeProps {
   isLoading: boolean;
@@ -16,7 +17,8 @@ const DISCORD_OAUTH = process.env.REACT_APP_DISCORD_OAUTH || '';
 const Home: React.FC<HomeProps> = ({ isLoading, user, setUser }) => {
   const logoRef = useRef<HTMLImageElement>(null);
   const handleLogin = useCallback(() => {
-    window.location.href = DISCORD_OAUTH;
+    Tokens.setCsrf(crypto.randomUUID());
+    window.location.href = `${DISCORD_OAUTH}----${Tokens.getCsrf()}`;
   }, []);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {

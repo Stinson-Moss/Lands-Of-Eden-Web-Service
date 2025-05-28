@@ -9,6 +9,10 @@ function discordAvatarUrl(avatar: string, id: string) {
   return `https://cdn.discordapp.com/avatars/${id}/${avatar}.png`;
 }
 
+function discordGuildIconUrl(icon: string, id: string) {
+  return `https://cdn.discordapp.com/icons/${id}/${icon}.png`;
+}
+
 interface LoginWidgetProps {
   user: User | null;
   setUser: (user: User | null) => void;

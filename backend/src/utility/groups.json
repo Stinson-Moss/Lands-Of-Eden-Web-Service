@@ -1,0 +1,319 @@
+{
+  "Mercenaries": {
+    "Classes": {
+      "Command": 4,
+      "Member": 2,
+      "Leader": 5,
+      "Officer": 3
+    },
+    "Name": "Mercenaries",
+    "IsPublic": true,
+    "IsHidden": false,
+    "Ranks": {
+      "1": "Wanderer",
+      "2": "Grunt",
+      "3": "Recruit",
+      "4": "Privateer",
+      "5": "Operative",
+      "6": "Marshal",
+      "7": "Commander",
+      "8": "Captain",
+      "9": "Admiral",
+      "10": "Officer",
+      "11": "Warlord",
+      "12": "Viceroy",
+      "13": "Overlord"
+    },
+    "Icon": "rbxassetid://85717686475733",
+    "Parent": null
+  },
+  "Templars": {
+    "Classes": {
+      "Command": 15,
+      "Member": 1,
+      "Leader": 17,
+      "Officer": 12
+    },
+    "Name": "Templars",
+    "IsPublic": true,
+    "IsHidden": false,
+    "Ranks": {
+      "1": "Enlist",
+      "2": "Levies",
+      "3": "Militant",
+      "4": "Footman",
+      "5": "Man-At-Arms",
+      "6": "Corporal",
+      "7": "Chaplain",
+      "8": "Apostle",
+      "9": "Zealot",
+      "10": "Sergeant",
+      "11": "Esquire",
+      "12": "Knight Templar",
+      "13": "Knight Captain",
+      "14": "Knight Marshal",
+      "15": "Master Templar",
+      "16": "Seneschal",
+      "17": "Grand Master"
+    },
+    "Icon": "rbxassetid://14449845568",
+    "Parent": null
+  },
+  "Chasseurs": {
+    "Classes": {
+      "Command": 4,
+      "Member": 2,
+      "Leader": 5,
+      "Officer": 3
+    },
+    "Name": "Chasseurs",
+    "IsPublic": false,
+    "IsHidden": false,
+    "Icon": "rbxassetid://14449857965",
+    "Parent": "Templars",
+    "Ranks": {
+      "1": "Soldat",
+      "2": "Gendarme",
+      "3": "Geôlier",
+      "4": "Veilleurs",
+      "5": "Arbitre",
+      "6": "Chevalier",
+      "7": "Maître",
+      "8": "Exécuteur",
+      "9": "Commissaire",
+      "10": "Primárch",
+      "11": "Seneschal",
+      "12": "Grand Master"
+    }
+  },
+  "Bloodhounds": {
+    "Classes": {
+      "Command": 4,
+      "Member": 2,
+      "Leader": 5,
+      "Officer": 3
+    },
+    "Name": "Bloodhounds",
+    "IsPublic": false,
+    "IsHidden": false,
+    "Icon": "rbxassetid://14449857355",
+    "Parent": "Templars",
+    "Ranks": {
+      "1": "Jäger",
+      "2": "Schützen",
+      "3": "Spezialist",
+      "4": "Scharfschütze",
+      "5": "Unteroffizier",
+      "6": "Leutnant",
+      "7": "Kapitän",
+      "8": "Kommandant",
+      "9": "Seneschal",
+      "10": "Grand Master"
+    }
+  },
+  "BlackCross": {
+    "Classes": {
+      "Command": 4,
+      "Member": 2,
+      "Leader": 5,
+      "Officer": 3
+    },
+    "Name": "BlackCross",
+    "IsPublic": false,
+    "IsHidden": true,
+    "Icon": "rbxassetid://16382617341",
+    "Parent": "Templars",
+    "Ranks": {
+      "1": "Field Operative",
+      "2": "Knight Justicar",
+      "3": "Knight Inquisitor",
+      "4": "Knight Buai",
+      "5": "Knight Commander",
+      "6": "Seneschal",
+      "7": "Grand Master"
+    }
+  },
+  "Assassins": {
+    "Classes": {
+      "Command": 13,
+      "Member": 1,
+      "Leader": 16,
+      "Officer": 11
+    },
+    "Name": "Assassins",
+    "IsPublic": true,
+    "IsHidden": false,
+    "Ranks": {
+      "1": "Civilian",
+      "2": "Initiate",
+      "3": "Novice",
+      "4": "Footpad",
+      "5": "Adept",
+      "6": "Disciple",
+      "7": "Warrior",
+      "8": "Mercenary",
+      "9": "Veteran",
+      "10": "Apprentice",
+      "11": "Assassin",
+      "12": "Master",
+      "13": "Sage",
+      "14": "Elder",
+      "15": "Dignitary",
+      "16": "Mentor"
+    },
+    "Icon": "rbxassetid://14449839384",
+    "Parent": null
+  },
+  "Phantoms": {
+    "Classes": {
+      "Command": 4,
+      "Member": 2,
+      "Leader": 5,
+      "Officer": 3
+    },
+    "Name": "Phantoms",
+    "IsPublic": false,
+    "IsHidden": true,
+    "Icon": "rbxassetid://16382615683",
+    "Parent": "Assassins",
+    "Ranks": {
+      "1": "Neofita",
+      "2": "Fantasmi",
+      "3": "Operatore",
+      "4": "Spettro",
+      "5": "Silenziatore",
+      "6": "Fantasma",
+      "7": "Dignitario",
+      "8": "Mentore"
+    }
+  },
+  "Sentinels": {
+    "Classes": {
+      "Command": 8,
+      "Member": 1,
+      "Leader": 10,
+      "Officer": 6
+    },
+    "Name": "Sentinels",
+    "IsPublic": false,
+    "IsHidden": false,
+    "Icon": "rbxassetid://14449844379",
+    "Parent": "Assassins",
+    "Ranks": {
+      "1": "Recruit",
+      "2": "Cadet ",
+      "3": "Guardian ",
+      "4": "Sentinel ",
+      "5": "Chevalier",
+      "6": "Enforcer",
+      "7": "Captain",
+      "8": "General",
+      "9": "Chief",
+      "10": "Commodore",
+      "11": "Dignitary",
+      "12": "Mentor"
+    }
+  },
+  "Paladins": {
+    "Classes": {
+      "Command": 7,
+      "Member": 1,
+      "Leader": 8,
+      "Officer": 6
+    },
+    "Name": "Paladins",
+    "IsPublic": false,
+    "IsHidden": false,
+    "Icon": "rbxassetid://78344018116380",
+    "Parent": "Sentinels",
+    "Ranks": {
+      "1": "Squire",
+      "2": "Gladiator",
+      "3": "Knight",
+      "4": "Paladin",
+      "5": "Vangaurd",
+      "6": "Lanista",
+      "7": "Marshal",
+      "8": "Warden",
+      "9": "Commodore",
+      "10": "Dignitary",
+      "11": "Mentor"
+    }
+  },
+  "Philosophers": {
+    "Classes": {
+      "Command": 4,
+      "Member": 2,
+      "Leader": 5,
+      "Officer": 3
+    },
+    "Name": "Philosophers",
+    "IsPublic": false,
+    "IsHidden": false,
+    "Icon": "rbxassetid://14449842675",
+    "Parent": "Assassins",
+    "Ranks": {
+      "1": "Pupil",
+      "3": "Student",
+      "4": "Scholar",
+      "5": "Philosopher",
+      "6": "Savant",
+      "7": "Scribe",
+      "8": "Herald",
+      "9": "Farseer",
+      "10": "Dignitary",
+      "11": "Mentor"
+    }
+  },
+  "Hunters": {
+    "Classes": {
+      "Command": 8,
+      "Member": 1,
+      "Leader": 10,
+      "Officer": 6
+    },
+    "Name": "Hunters",
+    "IsPublic": false,
+    "IsHidden": false,
+    "Icon": "rbxassetid://14449843362",
+    "Parent": "Assassins",
+    "Ranks": {
+      "1": "Enlist",
+      "2": "Novice",
+      "3": "Adept",
+      "4": "Veteran",
+      "5": "Mercenary",
+      "6": "Expert",
+      "7": "Master",
+      "8": "Lieutenant",
+      "9": "Captain",
+      "10": "General",
+      "11": "Dignitary",
+      "12": "Mentor"
+    }
+  },
+  "Vipers": {
+    "Classes": {
+      "Command": 6,
+      "Member": 1,
+      "Leader": 7,
+      "Officer": 5
+    },
+    "Name": "Vipers",
+    "IsPublic": false,
+    "IsHidden": false,
+    "Icon": "rbxassetid://87623504903511",
+    "Parent": "Hunters",
+    "Ranks": {
+      "1": "Scout",
+      "2": "Sharpshooter",
+      "3": "Archer",
+      "4": "Viper",
+      "5": "Huntsman",
+      "6": "Captain",
+      "7": "General",
+      "8": "Dignitary",
+      "9": "Mentor"
+    }
+  }
+} 

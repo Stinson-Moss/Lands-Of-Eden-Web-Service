@@ -24,8 +24,8 @@ const connection = await mysql.createConnection({
 
 const schema = `
 CREATE TABLE IF NOT EXISTS users (
-  discordId VARCHAR(255) NOT NULL,
-  robloxId VARCHAR(255) NOT NULL,
+  discordId VARCHAR(32) NOT NULL,
+  robloxId VARCHAR(32) NOT NULL,
   token VARCHAR(255),
   discordToken VARCHAR(255) NOT NULL,
   robloxToken TEXT,
@@ -44,6 +44,13 @@ CREATE TABLE IF NOT EXISTS users (
 )
 `;
 
+const bindingSchema = `
+CREATE TABLE IF NOT EXISTS bindings (
+  guildId VARCHAR(255) NOT NULL,
+  settings JSON
+)`;
+
+
 async function createSchema() {
   await (await connection).execute(schema);
 }
@@ -51,9 +58,20 @@ async function createSchema() {
 async function changeSchema() {
   await (await connection).execute(`
     ALTER TABLE users
-    MODIFY COLUMN tokenExpires BIGINT,
-    MODIFY COLUMN token VARCHAR(255),
-    MODIFY COLUMN refreshToken VARCHAR(255)
+    MODIFY discordId VARCHAR(32) NOT NULL,
+    MODIFY robloxId VARCHAR(32) NOT NULL,
+  
+    MODIFY token VARCHAR(512),
+    MODIFY refreshToken VARCHAR(512),
+    MODIFY tokenExpires BIGINT UNSIGNED,
+    
+    MODIFY discordToken VARCHAR(512) NOT NULL,
+    MODIFY discordRefreshToken VARCHAR(512) NOT NULL,
+    MODIFY discordTokenExpires BIGINT UNSIGNED NOT NULL,
+    
+    MODIFY robloxToken TEXT,
+    MODIFY robloxRefreshToken TEXT,
+    MODIFY robloxTokenExpires BIGINT UNSIGNED;
   `);
 
   connection.end();
