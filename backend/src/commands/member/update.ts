@@ -17,7 +17,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
         const permissions = interactionMember?.permissions as PermissionsBitField;
         const roles = interactionMember?.roles as GuildMemberRoleManager;
         
-        if (!permissions.has(PermissionsBitField.Flags.Administrator) && !roles.cache.has(process.env.ROLE_MODERATOR as string)) {
+        if (!permissions.has(PermissionsBitField.Flags.Administrator)) {
             await interaction.reply({
                 embeds: [ErrorMessage(
                     "Command Error",

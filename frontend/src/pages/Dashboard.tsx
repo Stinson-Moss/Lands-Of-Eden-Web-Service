@@ -41,8 +41,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         });
         const mutualServers = await serverResponse.json();
 
-        setServers(mutualServers);
-        setSelectedServer(mutualServers[0]);
+        setServers(mutualServers.guilds);
+        setSelectedServer(mutualServers.guilds[0]);
       } catch (error) {
         console.error('Error fetching servers:', error);
       } finally {
