@@ -58,20 +58,7 @@ async function createSchema() {
 async function changeSchema() {
   await (await connection).execute(`
     ALTER TABLE users
-    MODIFY discordId VARCHAR(32) NOT NULL,
-    MODIFY robloxId VARCHAR(32) NOT NULL,
-  
-    MODIFY token VARCHAR(512),
-    MODIFY refreshToken VARCHAR(512),
-    MODIFY tokenExpires BIGINT UNSIGNED,
-    
-    MODIFY discordToken VARCHAR(512) NOT NULL,
-    MODIFY discordRefreshToken VARCHAR(512) NOT NULL,
-    MODIFY discordTokenExpires BIGINT UNSIGNED NOT NULL,
-    
-    MODIFY robloxToken TEXT,
-    MODIFY robloxRefreshToken TEXT,
-    MODIFY robloxTokenExpires BIGINT UNSIGNED;
+    MODIFY robloxId VARCHAR(32);
   `);
 
   connection.end();

@@ -190,7 +190,7 @@ const app = express();
 app.use(cors({
   origin: REDIRECT_URI,
   allowedHeaders: ['Content-Type', 'Authorization'],
-  methods: ['POST', 'OPTIONS'],
+  methods: ['GET','POST', 'OPTIONS'],
   credentials: true,
 }));
 app.use(express.json());
