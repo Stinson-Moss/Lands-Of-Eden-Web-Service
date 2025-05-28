@@ -54,7 +54,7 @@ async function verifySession(session: any | null, data : any | null) {
     return response;
   }
 
-  const { token, refreshToken } = JSON.parse(session);
+  const { token, refreshToken } = session;
 
   if (!token || !refreshToken) {
     console.log('No token or refresh token found')
