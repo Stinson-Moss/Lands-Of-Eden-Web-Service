@@ -43,4 +43,4 @@ const SaveChangesBar: React.FC<SaveChangesBarProps> = ({
   );
 };
 
-export default SaveChangesBar; 
+export default React.memo(SaveChangesBar); 

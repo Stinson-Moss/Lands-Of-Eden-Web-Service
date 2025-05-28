@@ -215,4 +215,4 @@ const GroupManager: React.FC<GroupManagerProps> = ({
   );
 };
 
-export default GroupManager; 
+export default React.memo(GroupManager); 

@@ -95,4 +95,4 @@ const ServerSelector: React.FC<ServerSelectorProps> = ({
   );
 };
 
-export default ServerSelector; 
+export default React.memo(ServerSelector); 

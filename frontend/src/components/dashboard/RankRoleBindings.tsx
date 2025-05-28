@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import './RankRoleBindings.css';
 import Group from '../../types/Group';
 import RankBinding, { ComparisonOperator } from '../../types/RankBinding';
@@ -41,9 +41,9 @@ const RankRoleBindings: React.FC<RankRoleBindingsProps> = ({
   const [groupFilter, setGroupFilter] = useState<string>('');
   
   // Filter groups based on search query
-  const filteredGroups = groups.filter(group => 
+  const filteredGroups = useMemo(() => groups.filter(group => 
     group.Name.toLowerCase().includes(groupFilter.toLowerCase())
-  );
+  ), [groups, groupFilter]);
 
   const handleAddBindingClick = (groupName: string) => {
     setIsAddingBinding({...isAddingBinding, [groupName]: true});
@@ -502,4 +502,4 @@ const RankRoleBindings: React.FC<RankRoleBindingsProps> = ({
   );
 };
 
-export default RankRoleBindings; 
+export default React.memo(RankRoleBindings); 
