@@ -782,6 +782,41 @@ app.get('/api/roles/:serverId', async (req, res) => {
 
 })
 
+app.get('/api/bindings/:serverId', async (req, res) => {
+  const session = req.cookies.session;
+  const sessionResponse = await verifySession(session, null);
+
+  if (!sessionResponse.verified) {
+    return res.status(401).json({ error: 'Invalid session' });
+  }
+
+  const serverId = req.params.serverId;
+  if (!serverId) {
+    return res.status(400).json({ error: 'No server ID provided' });
+  }
+  
+
+  const [rows] = await Database.query('SELECT * FROM bindings WHERE serverId = ?', [serverId])
+  const bindings = (rows as any[])[0]
+  const bindingsData = JSON.parse(bindings.bindingSettings)
+
+  if (sessionResponse.needsUpdate) {
+    Database.query(`
+      UPDATE users
+      SET token = ?, refreshToken = ?, tokenExpires = ?
+      WHERE token = ?
+    `, [sessionResponse.data.token, sessionResponse.data.refreshToken, sessionResponse.data.expiresIn, session])
+
+    res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
+      httpOnly: true,
+      secure: true,
+      maxAge: COOKIE_EXPIRATION,
+      sameSite: 'none',
+    });
+  }
+
+  res.json(bindingsData)
+})
 app.post('/api/bindings/:serverId', async (req, res) => {
 
   const session = req.cookies.session;

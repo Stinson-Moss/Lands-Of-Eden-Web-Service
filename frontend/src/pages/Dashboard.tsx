@@ -82,7 +82,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             fetchedGroups.push(groupData);
           }
         }
-
+ 
         setGroups(fetchedGroups);
         setBindings(bindingsData);
       } catch (error) {

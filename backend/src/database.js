@@ -46,13 +46,17 @@ CREATE TABLE IF NOT EXISTS users (
 
 const bindingSchema = `
 CREATE TABLE IF NOT EXISTS bindings (
-  guildId VARCHAR(255) NOT NULL,
-  settings JSON
+  serverId VARCHAR(20) NOT NULL PRIMARY KEY,
+  bindingSettings JSON
 )`;
 
 
 async function createSchema() {
   await (await connection).execute(schema);
+}
+
+async function createBindingSchema() {
+  await (await connection).execute(bindingSchema);
 }
 
 async function changeSchema() {
@@ -123,14 +127,20 @@ async function printDatabase() {
 //   connection.end();
 // });
 
-changeSchema().catch(err => {
-  console.error(err);
-  connection.end();
-});
+// changeSchema().catch(err => {
+//   console.error(err);
+//   connection.end();
+// });
 
 // printDatabase().catch(err => {
 //   console.error(err);
 // }).finally(() => {
 //   connection.end();
 // });
+
+createBindingSchema().catch(err => {
+  console.error(err);
+}).finally(() => {
+  connection.end();
+});
 
