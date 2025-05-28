@@ -149,12 +149,10 @@ const RankRoleBindings: React.FC<RankRoleBindingsProps> = ({
     onUpdateBinding(bindingId, rank, values, operator, secondaryRank);
   };
 
-  // Helper function to check if a between binding has valid rank values
   const isValidBetweenBinding = (rank1: number, rank2: number) => {
     return rank1 > 0 && rank2 > 0 && rank1 !== rank2;
   };
-
-  // Helper function to get a human-readable description of the binding
+  
   const getBindingDescription = (rank: number, operator: ComparisonOperator, secondaryRank?: number) => {
     const rankName = activeGroup?.Ranks[rank.toString()] || rank;
     

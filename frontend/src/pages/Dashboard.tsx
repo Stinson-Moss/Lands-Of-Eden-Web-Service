@@ -83,6 +83,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             // get the group icon from the rbxassetid
             groupData.Icon = await Icons.getGroupIcon(groupData.Icon);
             groupList[groupName] = groupData;
+            console.log(groupData);
             fetchedGroups.push(groupData);
           }
         }
