@@ -236,8 +236,6 @@ const RankRoleBindings: React.FC<RankRoleBindingsProps> = ({
       
       {filteredGroups.length > 0 ? (
         filteredGroups.map(group => {
-
-          
           const groupBindings = bindings.filter(binding => binding.groupName === group.Name);
           const isActive = activeGroup === group;
           return (

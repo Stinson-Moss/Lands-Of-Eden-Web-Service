@@ -66,30 +66,28 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         const bindingsResponse = await axios.get(`${BACKEND_URL}/api/bindings/${selectedServer.id}`, {
           withCredentials: true
         });
-        const bindingsData = bindingsResponse.data;
+        const bindingsData: RankBinding[] = bindingsResponse.data;
 
         // Bindings are separated by group name, so we need to get the group data from each binding key
         const fetchedGroups: Group[] = [];
 
-        for (const groupName of Object.keys(bindingsData)) {
-          if (groupList[groupName]) {
-            fetchedGroups.push(groupList[groupName]);
+        for (const groupBinding of bindingsData) {
+          if (groupList[groupBinding.groupName]) {
+            fetchedGroups.push(groupList[groupBinding.groupName]);
           } else {
-
             try {
-              const groupResponse = await axios.get(`${BACKEND_URL}/api/group/${groupName}`, {
+              const groupResponse = await axios.get(`${BACKEND_URL}/api/group/${groupBinding.groupName}`, {
                 withCredentials: true
               });
               const groupData = groupResponse.data;
-              groupList[groupName] = groupData;
+              groupList[groupBinding.groupName] = groupData;
               fetchedGroups.push(groupData);
             } catch (error) {
               console.error('Error fetching group:', error);
             }
           }
         }
- 
-        console.log(bindingsData);
+
         setGroups(fetchedGroups);
         setBindings(bindingsData);
       } catch (error) {
@@ -120,11 +118,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   // Handle group removal
   const handleRemoveGroup = (targetGroup: Group) => {
     setGroups(groups.filter(group => group.Name !== targetGroup.Name));
-
-    if (Object.keys(bindings).length > 0) {
-      setBindings(bindings.filter(binding => binding.groupName !== targetGroup.Name));
-    }
-
+    setBindings(bindings.filter(binding => binding.groupName !== targetGroup.Name));
     setHasChanges(true);
   };
 

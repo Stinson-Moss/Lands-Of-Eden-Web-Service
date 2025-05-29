@@ -804,7 +804,7 @@ app.get('/api/bindings/:serverId', async (req, res) => {
     if (!bindings) {
       bindings = {
         serverId: serverId,
-        bindingSettings: {}
+        bindingSettings: []
       }
     }
 
