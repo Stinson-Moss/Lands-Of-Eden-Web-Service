@@ -982,9 +982,8 @@ client.login(process.env.DISCORD_TOKEN).catch(error => {
 });
 
 
-// Get the group Icons for each group
-for (const group of Object.values(groups)) {
+for (const [groupName, group] of Object.entries(groups)) {
   Icons.getGroupIcon(group.Icon).then(icon => {
-    group.Icon = icon;
+    groups[groupName as keyof typeof groups].Icon = icon;
   });
 }
