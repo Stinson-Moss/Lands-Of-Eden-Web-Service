@@ -234,8 +234,10 @@ const RankRoleBindings: React.FC<RankRoleBindingsProps> = ({
         </div>
       )}
       
-      {filteredGroups.length > 0 && Object.values(bindings).length > 0 ? (
+      {filteredGroups.length > 0 ? (
         filteredGroups.map(group => {
+
+          
           const groupBindings = bindings.filter(binding => binding.groupName === group.Name);
           const isActive = activeGroup === group;
           return (
@@ -500,4 +502,6 @@ const RankRoleBindings: React.FC<RankRoleBindingsProps> = ({
   );
 };
 
-export default React.memo(RankRoleBindings); 
+export default React.memo(RankRoleBindings, (prev, next) => {
+  return prev.groups.length === next.groups.length && prev.bindings.length === next.bindings.length;
+}); 
