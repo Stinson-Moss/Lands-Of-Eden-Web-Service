@@ -219,6 +219,8 @@ app.post('/auth/getUser', async (req, res) => {
   let session = req.cookies.session;
 
   console.log('CODE:', code)
+  console.log('SESSION:', session)
+  console.log('COOKIES:', req.cookies)
 
   if (code) {
 
