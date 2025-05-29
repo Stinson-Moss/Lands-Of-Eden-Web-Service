@@ -17,9 +17,7 @@ class Icons {
 
         try {
             const response = await fetch(url.replace('%s', iconId));
-            console.log('RESPONSE:', response);
             const data = await response.json();
-            console.log('DATA:', data);
             const imageUrl = data.data[0].imageUrl;
             this.cache.set(icon, imageUrl);
             return imageUrl;
