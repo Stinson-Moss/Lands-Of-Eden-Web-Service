@@ -9,7 +9,8 @@ class Icons {
         }
 
         const iconId = icon.match(/\d+/)?.[0] || null;
-
+        console.log('ICON ID:', iconId);
+        
         if (!iconId) {
             return '';
         }
