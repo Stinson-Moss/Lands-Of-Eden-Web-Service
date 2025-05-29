@@ -12,7 +12,7 @@ interface HomeProps {
   setUser: (user: User | null) => void;
 }
 
-const DISCORD_OAUTH = process.env.REACT_APP_DISCORD_OAUTH || '';
+const DISCORD_OAUTH = import.meta.env.VITE_DISCORD_OAUTH || '';
 
 const Home: React.FC<HomeProps> = ({ isLoading, user, setUser }) => {
   const logoRef = useRef<HTMLImageElement>(null);

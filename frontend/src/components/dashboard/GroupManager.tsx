@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import './GroupManager.css';
 import Group from '../../types/Group';
+import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_LINK || '';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_LINK || '';
 
 interface GroupManagerProps {
   groups: Group[];
@@ -45,18 +46,11 @@ const GroupManager: React.FC<GroupManagerProps> = ({
     setSearchError(null);
 
     try {
-      const foundGroup = await fetch(`${BACKEND_URL}/api/group/${groupIdInput}`);
-      const foundGroupData = await foundGroup.json();
-
-      console.log(`Found group: ${JSON.stringify(foundGroupData)}`);
+      const foundGroupResponse = await axios.get(`${BACKEND_URL}/api/group/${groupIdInput}`);
+      const foundGroupData = foundGroupResponse.data;
 
       if (groups.some(group => group.Name === foundGroupData.Name)) {
         setSearchError('This group is already added');
-        return;
-      }
-
-      if (foundGroupData.Name === '') {
-        setSearchError('Failed to find group. Please check the name and try again.');
         return;
       }
 

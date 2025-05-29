@@ -6,8 +6,8 @@ import Dashboard from './pages/Dashboard';
 import Tokens from './classes/Tokens';
 import { User } from './types/Session';
 import './App.css';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_LINK || '';
+import axios from 'axios';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_LINK || '';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -41,13 +41,12 @@ const App: React.FC = () => {
         : `${BACKEND_URL}/auth/getUser`;
       
       try {
-        const response = await fetch(url, {
-          method: 'POST',
+        const response = await axios.post(url, body, {
           headers: { 'Content-Type': 'application/json' },
-          body,
-          credentials: 'include',
+          withCredentials: true
         });
-        const data = await response.json();
+
+        const data = response.data;
         
         if (data.user) {
           setUser(data.user);

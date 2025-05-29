@@ -9,7 +9,9 @@ import Server from '../types/Server';
 import Group from '../types/Group';
 import RankBinding, { ComparisonOperator } from '../types/RankBinding';
 import './Dashboard.css';
-const BACKEND_URL = process.env.REACT_APP_BACKEND_LINK || '';
+import axios from 'axios';
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_LINK || '';
 
 interface DashboardProps {
   user: User | null;
@@ -35,10 +37,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       try {
 
         // TODO: CSRF protection
-        const serverResponse = await fetch(`${BACKEND_URL}/api/servers`, {
-          credentials: 'include'
+        const serverResponse = await axios.get(`${BACKEND_URL}/api/servers`, {
+          withCredentials: true
         });
-        const mutualServers = await serverResponse.json();
+        const mutualServers = serverResponse.data;
 
         setServers(mutualServers.guilds);
         setSelectedServer(mutualServers.guilds[0]);
@@ -61,11 +63,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       try {
         // TODO: CSRF protection
         // Get binding settings for selected server
-        const bindingsResponse = await fetch(`${BACKEND_URL}/api/bindings/${selectedServer.id}`, {
-          method: 'GET',
-          credentials: 'include'
+        const bindingsResponse = await axios.get(`${BACKEND_URL}/api/bindings/${selectedServer.id}`, {
+          withCredentials: true
         });
-        const bindingsData = await bindingsResponse.json();
+        const bindingsData = bindingsResponse.data;
 
         // Bindings are separated by group name, so we need to get the group data from each binding key
         const fetchedGroups: Group[] = [];
@@ -76,10 +77,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           } else {
 
             try {
-              const groupResponse = await fetch(`${BACKEND_URL}/api/group/${groupName}`, {
-                credentials: 'include'
+              const groupResponse = await axios.get(`${BACKEND_URL}/api/group/${groupName}`, {
+                withCredentials: true
               });
-              const groupData = await groupResponse.json();
+              const groupData = groupResponse.data;
               groupList[groupName] = groupData;
               fetchedGroups.push(groupData);
             } catch (error) {
@@ -112,7 +113,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   // Handle group addition
   const handleAddGroup = async (group : Group) => {
-
     setGroups([...groups, group]);
     setHasChanges(true);
   };
@@ -160,14 +160,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const handleSaveChanges = async () => {
     setIsSaving(true);
     try {
-      
-      await fetch(`${BACKEND_URL}/api/bindings/${selectedServer?.id}`, {
-        method: 'POST',
-        body: JSON.stringify(bindings),
-        credentials: 'include',
+      // TODO: CSRF protection
+      await axios.post(`${BACKEND_URL}/api/bindings/${selectedServer?.id}`, JSON.stringify(bindings), {
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        withCredentials: true
       });
       
       setHasChanges(false);

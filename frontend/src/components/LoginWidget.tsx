@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import './LoginWidget.css';
 import { User } from '../types/Session';
 import NegativeConfirmationDialog from './NegativeConfirmationDialog';
+import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_LINK || '';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_LINK || '';
 
 function discordAvatarUrl(avatar: string, id: string) {
   return `https://cdn.discordapp.com/avatars/${id}/${avatar}.png`;
@@ -26,7 +27,7 @@ const LoginWidget: React.FC<LoginWidgetProps> = ({ user, setUser }) => {
   };
 
   const handleLogout = async () => {
-    await fetch(`${BACKEND_URL}/logout`, { method: 'POST', credentials: 'include' });
+    await axios.post(`${BACKEND_URL}/logout`, {}, { withCredentials: true });
     setUser(null);
   };
 

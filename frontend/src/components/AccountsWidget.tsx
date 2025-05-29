@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import './AccountsWidget.css';
 import { User } from '../types/Session';
 import NegativeConfirmationDialog from './NegativeConfirmationDialog';
+import axios from 'axios';
 
 interface AccountsWidgetProps {
   user: User | null;
   setUser: (user: User | null) => void;
 }
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_LINK || '';
-const ROBLOX_OAUTH = process.env.REACT_APP_ROBLOX_OAUTH || '';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_LINK || '';
+const ROBLOX_OAUTH = import.meta.env.VITE_ROBLOX_OAUTH || '';
 
 const AccountsWidget: React.FC<AccountsWidgetProps> = ({ user, setUser }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -24,14 +25,13 @@ const AccountsWidget: React.FC<AccountsWidgetProps> = ({ user, setUser }) => {
   };
 
   const handleUnlink = () => {
-    fetch(`${BACKEND_URL}/unlink`, {
-      method: 'POST',
+    axios.post(`${BACKEND_URL}/unlink`, {}, {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
+      withCredentials: true
     })
-      .then(res => res.json())
+      .then(res => res.data)
       .then(data => {
         if (data.success) {
           if (!user) {
