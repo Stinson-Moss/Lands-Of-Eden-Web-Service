@@ -37,7 +37,7 @@ const GroupManager: React.FC<GroupManagerProps> = ({
 
   const handleSearch = async () => {
     if (!groupIdInput.trim()) {
-      setSearchError('Please enter a group ID or name');
+      setSearchError('Please enter a group name');
       return;
     }
 
@@ -54,11 +54,11 @@ const GroupManager: React.FC<GroupManagerProps> = ({
       }
 
       onAddGroup(foundGroupData);
-      setIsAdding(false);
-      setGroupIdInput('');
     } catch (error) {
       setSearchError('Failed to find group. Please check the name and try again.');
     } finally {
+      setIsAdding(false);
+      setGroupIdInput('');
       setIsSearching(false);
     }
   };

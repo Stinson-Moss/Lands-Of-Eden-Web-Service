@@ -24,7 +24,7 @@ const App: React.FC = () => {
       if (code && (!csrf || !domain || csrf !== Tokens.getCsrf())) {
         console.log('Invalid code or CSRF token')
         // window.location.href = '/';
-        return;
+        // return;
       }
 
       if (code) {

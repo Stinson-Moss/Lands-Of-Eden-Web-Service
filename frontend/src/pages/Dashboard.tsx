@@ -74,12 +74,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           if (groupList[groupName]) {
             fetchedGroups.push(groupList[groupName]);
           } else {
-            const groupResponse = await fetch(`${BACKEND_URL}/api/group/${groupName}`, {
-              credentials: 'include'
-            });
-            const groupData = await groupResponse.json();
-            groupList[groupName] = groupData;
-            fetchedGroups.push(groupData);
+
+            try {
+              const groupResponse = await fetch(`${BACKEND_URL}/api/group/${groupName}`, {
+                credentials: 'include'
+              });
+              const groupData = await groupResponse.json();
+              groupList[groupName] = groupData;
+              fetchedGroups.push(groupData);
+            } catch (error) {
+              console.error('Error fetching group:', error);
+            }
           }
         }
  
@@ -118,7 +123,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     if (Object.keys(bindings).length > 0) {
       setBindings(bindings.filter(binding => binding.groupName !== targetGroup.Name));
     }
-    
+
     setHasChanges(true);
   };
 
