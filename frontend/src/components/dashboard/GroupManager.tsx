@@ -48,8 +48,15 @@ const GroupManager: React.FC<GroupManagerProps> = ({
       const foundGroup = await fetch(`${BACKEND_URL}/api/group/${groupIdInput}`);
       const foundGroupData = await foundGroup.json();
 
+      console.log(`Found group: ${JSON.stringify(foundGroupData)}`);
+
       if (groups.some(group => group.Name === foundGroupData.Name)) {
         setSearchError('This group is already added');
+        return;
+      }
+
+      if (foundGroupData.Name === '') {
+        setSearchError('Failed to find group. Please check the name and try again.');
         return;
       }
 

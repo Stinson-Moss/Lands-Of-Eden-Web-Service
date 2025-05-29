@@ -112,6 +112,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   // Handle group addition
   const handleAddGroup = async (group : Group) => {
+
     setGroups([...groups, group]);
     setHasChanges(true);
   };
