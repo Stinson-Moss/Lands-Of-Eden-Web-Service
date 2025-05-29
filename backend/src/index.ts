@@ -982,8 +982,11 @@ client.login(process.env.DISCORD_TOKEN).catch(error => {
 });
 
 
+console.log('Getting group icons...');
 for (const [groupName, group] of Object.entries(groups)) {
   Icons.getGroupIcon(group.Icon).then(icon => {
+    console.log('GROUP NAME:', groupName);
+    console.log('GROUP ICON:', icon);
     groups[groupName as keyof typeof groups].Icon = icon;
   });
 }
