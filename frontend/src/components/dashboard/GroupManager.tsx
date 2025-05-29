@@ -7,7 +7,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_LINK || '';
 interface GroupManagerProps {
   groups: Group[];
   onAddGroup: (group: Group) => void;
-  onRemoveGroup: (groupName: string) => void;
+  onRemoveGroup: (targetGroup: Group) => void;
   isLoading: boolean;
 }
 
@@ -155,7 +155,7 @@ const GroupManager: React.FC<GroupManagerProps> = ({
                 </div>
                 <button 
                   className="remove-group-button"
-                  onClick={() => onRemoveGroup(group.Name)}
+                  onClick={() => onRemoveGroup(group)}
                   aria-label={`Remove ${group.Name}`}
                 >
                   <span className="remove-icon">×</span>

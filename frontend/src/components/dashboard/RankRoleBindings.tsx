@@ -152,7 +152,7 @@ const RankRoleBindings: React.FC<RankRoleBindingsProps> = ({
   const isValidBetweenBinding = (rank1: number, rank2: number) => {
     return rank1 > 0 && rank2 > 0 && rank1 !== rank2;
   };
-  
+
   const getBindingDescription = (rank: number, operator: ComparisonOperator, secondaryRank?: number) => {
     const rankName = activeGroup?.Ranks[rank.toString()] || rank;
     
@@ -200,6 +200,7 @@ const RankRoleBindings: React.FC<RankRoleBindingsProps> = ({
     );
   }
 
+  console.log(`Groups: ${JSON.stringify(groups)}`)
   if (groups.length === 0) {
     return (
       <div className="bindings-empty">

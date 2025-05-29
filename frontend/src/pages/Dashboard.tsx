@@ -112,9 +112,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   };
 
   // Handle group removal
-  const handleRemoveGroup = (groupName: string) => {
-    setGroups(groups.filter(group => group.Name !== groupName));
-    setBindings(bindings.filter(binding => binding.groupName !== groupName));
+  const handleRemoveGroup = (targetGroup: Group) => {
+    setGroups(groups.filter(group => group.Name !== targetGroup.Name));
+
+    if (Object.keys(bindings).length > 0) {
+      setBindings(bindings.filter(binding => binding.groupName !== targetGroup.Name));
+    }
+    
     setHasChanges(true);
   };
 
