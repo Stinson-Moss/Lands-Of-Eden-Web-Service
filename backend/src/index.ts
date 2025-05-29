@@ -10,6 +10,7 @@ import { Collection, Client, GatewayIntentBits, PermissionsBitField, Guild } fro
 import groups from './utility/groups.json'
 import DiscordClient from './classes/discordclient';
 import Database from './classes/database';
+import Icons from './classes/Icons';
 
 declare module 'discord.js' {
   interface Client {
@@ -945,12 +946,10 @@ for (const folder of cmdFolders) {
 
     for (const file of cmdFiles) {
         const filePath = path.join(cmdPath, file);
-        console.log(`Loading command: ${filePath}`);
         const command = require(filePath);
 
         if ('data' in command && 'execute' in command) {
             client.commands.set(command.data.name, command);
-            console.log(`Loaded command: ${command.data.name}`);
         } else {
             console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
         }
@@ -963,7 +962,6 @@ const eventFiles = fs.readdirSync(eventFolder).filter(file => file.endsWith('.ts
 
 for (const file of eventFiles) {
     const filePath = path.join(eventFolder, file);
-    console.log(`Loading event: ${filePath}`);
     const event = require(filePath);
 
     if (event.once) {
@@ -971,7 +969,6 @@ for (const file of eventFiles) {
     } else {
         client.on(event.name, (...args) => event.execute(...args));
     }
-    console.log(`Loaded event: ${event.name}`);
 }
 
 // Set the client
@@ -985,3 +982,9 @@ client.login(process.env.DISCORD_TOKEN).catch(error => {
 });
 
 
+// Get the group Icons for each group
+for (const group of Object.values(groups)) {
+  Icons.getGroupIcon(group.Icon).then(icon => {
+    group.Icon = icon;
+  });
+}

@@ -1,4 +1,4 @@
-const url = 'https://thumbnails.roblox.com/v1/assets/?assetIds=%s&format=png&size=150x150';
+const url = 'https://thumbnails.roblox.com/v1/assets/?assetIds=%s&format=webp&size=150x150';
 
 class Icons {
     static cache: Map<string, string> = new Map();

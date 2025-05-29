@@ -9,7 +9,6 @@ import Server from '../types/Server';
 import Group from '../types/Group';
 import RankBinding, { ComparisonOperator } from '../types/RankBinding';
 import './Dashboard.css';
-import Icons from '../classes/Icons';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_LINK || '';
 
 interface DashboardProps {
@@ -79,11 +78,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
               credentials: 'include'
             });
             const groupData = await groupResponse.json();
-
-            // get the group icon from the rbxassetid
-            groupData.Icon = await Icons.getGroupIcon(groupData.Icon);
             groupList[groupName] = groupData;
-            console.log(groupData);
             fetchedGroups.push(groupData);
           }
         }
@@ -112,7 +107,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   // Handle group addition
   const handleAddGroup = async (group : Group) => {
-    group.Icon = await Icons.getGroupIcon(group.Icon);
     setGroups([...groups, group]);
     setHasChanges(true);
   };
