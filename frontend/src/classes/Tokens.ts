@@ -1,8 +1,8 @@
 class Tokens {
     private static csrf: string = '';
 
-    public static setCsrf(csrf: string) {
-        this.csrf = csrf;
+    public static setCsrf(newCsrf: string) {
+        this.csrf = newCsrf;
     }
 
     public static getCsrf() {

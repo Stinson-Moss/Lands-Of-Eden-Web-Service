@@ -15,27 +15,23 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleAuth = async () => {
-      const code = new URLSearchParams(window.location.search).get('code');
-      const state = new URLSearchParams(window.location.search).get('state');
-      const [domain, csrf] = state?.split('----') || [];
+      let code = new URLSearchParams(window.location.search).get('code');
+      let state = new URLSearchParams(window.location.search).get('state');
+      let [domain, csrf] = state?.split('----') || [];
 
       console.log('STATE:', state)
       
       if (code && (!csrf || !domain || csrf !== Tokens.getCsrf())) {
         console.log('Invalid code or CSRF token')
-        // window.location.href = '/';
-        // return;
+        console.log(code, csrf, domain, Tokens.getCsrf())
+        code = null;
+        domain = '';
+
       }
+      
+      window.history.replaceState({}, '', window.location.pathname);
 
-      if (code) {
-        window.history.replaceState({}, '', window.location.pathname);
-      }
-
-      console.log('CODE:', code)
-      console.log('DOMAIN:', domain)
-      console.log('CSRF:', csrf)
-
-      const body = code ? JSON.stringify({ code }) : null;
+      const body = JSON.stringify({ code });
       const url = domain && domain === 'roblox' 
         ? `${BACKEND_URL}/auth/roblox`
         : `${BACKEND_URL}/auth/getUser`;
