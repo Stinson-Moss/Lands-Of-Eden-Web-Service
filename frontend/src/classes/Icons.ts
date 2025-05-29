@@ -8,7 +8,12 @@ class Icons {
             return this.cache.get(icon);
         }
 
-        const iconId = icon.split(':')[1];
+        const iconId = icon.match(/\d+/)?.[0] || null;
+
+        if (!iconId) {
+            return '';
+        }
+
         try {
             const response = await fetch(url.replace('%s', iconId));
             const data = await response.json();
