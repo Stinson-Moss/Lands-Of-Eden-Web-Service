@@ -685,8 +685,9 @@ app.get('/ping', (req, res) => {
 
 app.get('/api/servers', async (req, res) => {
   const session = req.cookies.session;
+  const {token, refreshToken} = JSON.parse(session);
   
-  let [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [JSON.parse(session).token])
+  let [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [token])
   let queryObject = (rows as any[])[0]
   
   const sessionResponse = await verifySession(session, queryObject);
@@ -845,14 +846,13 @@ app.get('/api/bindings/:serverId', async (req, res) => {
 app.post('/api/bindings/:serverId', async (req, res) => {
   const session = req.cookies.session;
 
-  const [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [session]);
+  const [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [session.token]);
   const queryObject = (rows as any[])[0];
 
   if (!queryObject) {
     return res.status(401).json({ error: 'Invalid session' });
   }
 
-  
   const sessionResponse = await verifySession(session, queryObject);
   
   if (!sessionResponse.verified) {
