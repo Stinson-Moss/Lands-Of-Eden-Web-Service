@@ -846,7 +846,7 @@ app.get('/api/bindings/:serverId', async (req, res) => {
 app.post('/api/bindings/:serverId', async (req, res) => {
   const session = req.cookies.session;
 
-  const [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [session.token]);
+  const [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [JSON.parse(session).token]);
   const queryObject = (rows as any[])[0];
 
   if (!queryObject) {
