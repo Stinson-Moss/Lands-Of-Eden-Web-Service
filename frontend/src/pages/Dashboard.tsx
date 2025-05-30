@@ -18,6 +18,7 @@ interface DashboardProps {
 }
 
 const groupList: {[key: string]: Group} = {};
+const deletedBindings: string[] = [];
 
 const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   // State for servers, selected server, groups, and bindings
@@ -125,7 +126,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   // Handle binding addition
   const handleAddBinding = (groupName: string, rank: number, roles: string[], operator: ComparisonOperator, secondaryRank?: number) => {
     const newBinding = {
-      id: `b${Date.now()}`,
+      id: crypto.randomUUID(),
+      serverId: selectedServer?.id || '',
       groupName,
       rank,
       roles,
@@ -138,8 +140,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   // Handle binding removal
   const handleRemoveBinding = (bindingId: string) => {
-    setBindings(bindings.filter(binding => binding.id !== bindingId));
-    setHasChanges(true);
+    if (deletedBindings.includes(bindingId)) {
+      return;
+    }
+
+    if (bindings.some(binding => binding.id === bindingId)) {
+      if (parseInt(bindingId)) {
+        deletedBindings.push(bindingId);
+      }
+      
+      setBindings(bindings.filter(binding => binding.id !== bindingId));
+      setHasChanges(true);
+    }
   };
 
   // Handle binding update
@@ -155,12 +167,28 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     setIsSaving(true);
     try {
       // TODO: CSRF protection
-      await axios.post(`${BACKEND_URL}/api/bindings/${selectedServer?.id}`, JSON.stringify(bindings), {
+      const bindingRequest = {
+        insert: [] as RankBinding[],
+        update: [] as RankBinding[],
+        delete: deletedBindings
+      }
+
+      for (const binding of bindings) {
+        if (binding.id) {
+          bindingRequest.update.push(binding);
+        } else {
+          bindingRequest.insert.push(binding);
+        }
+      }
+
+      await axios.post(`${BACKEND_URL}/api/bindings/${selectedServer?.id}`, JSON.stringify(bindingRequest), {
         headers: {
           'Content-Type': 'application/json'
         },
         withCredentials: true
       });
+
+      deletedBindings.length = 0;
       
       setHasChanges(false);
     } catch (error) {
@@ -181,10 +209,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             cancelButtonText: 'Cancel'
           }}
           onConfirm={() => {
+            deletedBindings.length = 0;
             setSelectedServer(requestedServer);
             setRequestedServer(null);
           }}
-          onCancel={() => setRequestedServer(null)}
+          onCancel={() => {
+            deletedBindings.length = 0;
+            setRequestedServer(null);
+          }}
         />
       )}
       <div className="dashboard-content">

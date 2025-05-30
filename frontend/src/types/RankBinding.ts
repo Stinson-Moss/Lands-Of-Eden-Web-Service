@@ -3,6 +3,7 @@ export type ComparisonOperator = '=' | '>=' | '<=' | 'between';
 
 interface RankBinding {
     id: string;
+    serverId: string;
     groupName: string;
     rank: number;
     secondaryRank?: number; // Used for 'between' operator to specify the upper bound

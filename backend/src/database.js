@@ -68,6 +68,25 @@ async function changeSchema() {
   connection.end();
 }
 
+async function changeBindingSchema() {
+  await (await connection).execute(`
+    ALTER TABLE bindings
+
+    DROP COLUMN bindingSettings,
+    DROP PRIMARY KEY,
+ 
+    ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    ADD COLUMN groupName VARCHAR(50) NOT NULL,
+    ADD COLUMN \`rank\` INT NOT NULL,
+    ADD COLUMN secondaryRank INT,
+    ADD COLUMN operator VARCHAR(10) NOT NULL,
+    ADD COLUMN roles JSON NOT NULL,
+    
+    ADD INDEX(groupName),
+    ADD INDEX(serverId);
+  `);
+}
+
 async function clear() {
   await (await connection).execute(`
     DELETE FROM users
@@ -138,9 +157,14 @@ async function printDatabase() {
 //   connection.end();
 // });
 
-createBindingSchema().catch(err => {
+// createBindingSchema().catch(err => {
+//   console.error(err);
+// }).finally(() => {
+//   connection.end();
+// });
+
+changeBindingSchema().catch(err => {
   console.error(err);
 }).finally(() => {
   connection.end();
 });
-

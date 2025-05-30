@@ -11,6 +11,7 @@ import groups from './utility/groups.json'
 import DiscordClient from './classes/discordclient';
 import Database from './classes/database';
 import Icons from './classes/Icons';
+import e from 'express';
 
 declare module 'discord.js' {
   interface Client {
@@ -28,6 +29,15 @@ const REDIRECT_URI: string = process.env.REDIRECT_URI || '';
 const ROBLOX_API_KEY = process.env.ROBLOX_API_KEY;
 const SESSION_EXPIRATION = 600; // 10 minutes in seconds
 const COOKIE_EXPIRATION = 365 * 24 * 60 * 60 * 1000;
+
+interface rankBinding {
+  groupName: string;
+  rank: number;
+  operator: string;
+  secondaryRank?: number;
+  roles: string[];
+  id?: string;
+}
 
 interface sessionResponse {
   verified: boolean;
@@ -834,77 +844,223 @@ app.get('/api/bindings/:serverId', async (req, res) => {
 
 app.post('/api/bindings/:serverId', async (req, res) => {
   const session = req.cookies.session;
-  const sessionResponse = await verifySession(session, null);
 
+  const [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [session]);
+  const queryObject = (rows as any[])[0];
+
+  if (!queryObject) {
+    return res.status(401).json({ error: 'Invalid session' });
+  }
+
+  
+  const sessionResponse = await verifySession(session, queryObject);
+  
   if (!sessionResponse.verified) {
     return res.status(401).json({ error: 'Invalid session' });
   }
 
   const serverId = req.params.serverId;
   console.log('SERVER ID:', serverId)
-
+  
   if (!serverId) {
     return res.status(400).json({ error: 'No server ID provided' });
   }
 
+  const discordMember = DiscordClient.client.guilds.cache.get(serverId)?.members.cache.get(queryObject.discordId);
+
+  if (!discordMember || !discordMember.permissions.has(PermissionsBitField.Flags.Administrator)) {
+    return res.status(403).json({ error: 'Invalid permissions' });
+  }
+  
   if (!req.body) {
     return res.status(400).json({ error: 'No body provided' });
   }
 
+  // check if the server exists
   if (!DiscordClient.client.guilds.cache.get(serverId)) {
     return res.status(404).json({ error: 'Server not found' });
   }
 
-  const bindings: {[key: string]: {rank: number, operator: string, secondaryRank?: number, roles: string[]}} = JSON.parse(req.body);
-  console.log('BINDINGS:', bindings)
+  const bindingRequest : {insert: rankBinding[], delete: string[], update: rankBinding[]} = req.body;
 
-  // check if the bindings are valid
-  for (const [groupName, binding] of Object.entries(bindings)) {
-    const group = groups[groupName as keyof typeof groups];
-
-    if (!group) {
-      return res.status(404).json({ error: 'Group not found' });
+  for (const bindings of [bindingRequest.insert, bindingRequest.update]) {
+    // binding length validation
+    if (bindings.length === 0) {
+      return res.status(400).json({ error: 'No bindings provided' });
     }
-
-    if (!groupName || !binding.roles || !binding.rank || !binding.operator) {
-      return res.status(400).json({ error: 'Invalid binding' });
+  
+    if (bindings.length > 25) {
+      return res.status(400).json({ error: 'Too many bindings provided' });
     }
-
-    if (binding.operator !== '>=' && binding.operator !== '<=' && binding.operator !== '=' && binding.operator !== 'between') {
-      return res.status(400).json({ error: 'Invalid operator' });
+  
+    // check if the bindings are valid
+    for (const binding of bindings) {
+      const groupName = binding.groupName;
+      const group = groups[groupName as keyof typeof groups];
+  
+      if (!group) {
+        return res.status(404).json({ error: 'Group not found' });
+      }
+  
+      // Binding validation
+      if (!groupName || !binding.roles || !binding.rank || !binding.operator) {
+        return res.status(400).json({ error: 'Invalid binding' });
+      }
+  
+      // Operator validation
+      if (binding.operator !== '>=' && binding.operator !== '<=' && binding.operator !== '=' && binding.operator !== 'between') {
+        return res.status(400).json({ error: 'Invalid operator' });
+      }
+      
+      if (binding.operator === 'between') {
+        if (!binding.secondaryRank) {
+          return res.status(400).json({ error: 'Secondary rank is required for between operator' });
+        }
+  
+        if (binding.secondaryRank <= binding.rank) {
+          return res.status(400).json({ error: 'Secondary rank must be greater than primary rank' });
+        }
+      } else {
+        
+        if (binding.secondaryRank) {
+          return res.status(400).json({ error: 'Secondary rank is only allowed for between operator' });
+        }
+      }
+  
+      if (binding.secondaryRank && (isNaN(binding.secondaryRank!) || typeof binding.secondaryRank !== 'number')) {
+        return res.status(400).json({ error: 'Invalid secondary rank' });
+      }
+  
+      if (isNaN(binding.rank) || typeof binding.rank !== 'number') {
+        return res.status(400).json({ error: 'Invalid rank' });
+      }
+  
+      const groupRankCount = Object.keys(group.Ranks).length;
+      if (binding.rank > groupRankCount || binding.secondaryRank! > groupRankCount || binding.rank < 0 || binding.secondaryRank! < 1) {
+        return res.status(400).json({ error: 'Invalid rank' });
+      }
+  
+      // check roles
+      const guild = DiscordClient.client.guilds.cache.get(serverId);
+      
+      for (const role of binding.roles) {
+        if (!guild?.roles.cache.get(role)) {
+          return res.status(400).json({ error: 'Invalid role' });
+        }
+      }
     }
     
-    if (binding.operator === 'between' && !binding.secondaryRank) {
-      return res.status(400).json({ error: 'Secondary rank is required for between operator' });
-    }
-
-    if (binding.operator !== 'between' && binding.secondaryRank) {
-      return res.status(400).json({ error: 'Secondary rank is only allowed for between operator' });
-    }
-
-    if (binding.operator === 'between' && binding.secondaryRank! <= binding.rank) {
-      return res.status(400).json({ error: 'Secondary rank must be greater than primary rank' });
-    }
-
-    if (binding.operator === 'between' && binding.secondaryRank! > 100) {
-      return res.status(400).json({ error: 'Secondary rank must be less than 100' });
-    }
-
-    const groupRankCount = Object.keys(group.Ranks).length;
-    if (binding.rank > groupRankCount || binding.secondaryRank! > groupRankCount || binding.rank < 1 || binding.secondaryRank! < 1) {
-      return res.status(400).json({ error: 'Invalid rank' });
-    }
   }
+  
+  
+  try {
+    // add, delete, and update bindings
+    await Database.query('START TRANSACTION');
+    
+    // Add
+    if (bindingRequest.insert && bindingRequest.insert.length > 0) {
+      const values = bindingRequest.insert.map(binding => [
+        serverId,
+        binding.groupName,
+        binding.rank,
+        binding.secondaryRank || null,
+        binding.operator,
+        JSON.stringify(binding.roles)
+      ]);
+  
+      await Database.query(`
+        INSERT INTO bindings (serverId, groupName, rank, secondaryRank, operator, roles)
+        VALUES ?
+      `, [values]);
+    }
 
-  console.log('BINDINGS ARE VALID')
+    // Delete
+     if (bindingRequest.delete && bindingRequest.delete.length > 0) {
+      await Database.query(`
+        DELETE FROM bindings 
+        WHERE id IN (?) AND serverId = ?
+      `, [bindingRequest.delete, serverId]);
+    }
+
+    // Update
+    if (bindingRequest.update.length > 0) {
+      const idList = bindingRequest.update.map(binding => binding.id);
+      
+      const groupNameCases = bindingRequest.update.map(b => 
+        `WHEN ${b.id} THEN ?`).join(' ');
+      
+      const rankCases = bindingRequest.update.map(b => 
+        `WHEN ${b.id} THEN ?`).join(' ');
+      
+      const secondaryRankCases = bindingRequest.update.map(b => 
+        `WHEN ${b.id} THEN ?`).join(' ');
+      
+      const operatorCases = bindingRequest.update.map(b => 
+        `WHEN ${b.id} THEN ?`).join(' ');
+      
+      const rolesCases = bindingRequest.update.map(b => 
+        `WHEN ${b.id} THEN ?`).join(' ');
+
+      // Params in order
+      const params = [
+        ...bindingRequest.update.map(b => b.groupName),
+        ...bindingRequest.update.map(b => b.rank),
+        ...bindingRequest.update.map(b => b.secondaryRank || null),
+        ...bindingRequest.update.map(b => b.operator),
+        ...bindingRequest.update.map(b => JSON.stringify(b.roles)),
+        serverId
+      ];
+
+      await Database.query(`
+        UPDATE bindings
+        SET 
+          groupName = CASE id
+            ${groupNameCases}
+            ELSE groupName
+          END,
+          \`rank\` = CASE id
+            ${rankCases}
+            ELSE \`rank\`
+          END,
+          secondaryRank = CASE id
+            ${secondaryRankCases}
+            ELSE secondaryRank
+          END,
+          operator = CASE id
+            ${operatorCases}
+            ELSE operator
+          END,
+          roles = CASE id
+            ${rolesCases}
+            ELSE roles
+          END
+          WHERE id IN (${idList.join(',')}) AND serverId = ?
+            `, params);
+      }
+    
+    await Database.query('COMMIT');
+  } catch (error) {
+    await Database.query('ROLLBACK');
+    console.error('Error saving binding:', error);
+    res.status(500).json({ error: 'Failed to save binding' });
+  }
 
   try {
 
+    const values = bindingRequest.insert.map(binding => [
+      serverId,
+      binding.groupName,
+      binding.rank,
+      binding.secondaryRank || null,
+      binding.operator,
+      JSON.stringify(binding.roles)
+    ]);
+
     // save binding
     await Database.query(`
-      INSERT INTO bindings (serverId, bindingSettings)
-      VALUES (?, ?)
-    `, [serverId, JSON.stringify(bindings)]);
+      INSERT INTO bindings (serverId, groupName, rank, secondaryRank, operator, roles)
+      VALUES ?
+    `, [values]);
 
     if (sessionResponse.needsUpdate) {
       Database.query(`
@@ -983,13 +1139,12 @@ client.login(process.env.DISCORD_TOKEN).catch(error => {
     console.error('Error logging in:', error);
 });
 
-console.log('Getting group icons...');
 const iconIds = Object.values(groups).map(group => group.Icon.match(/\d+/)?.[0] || '');
 const iconIdsString = iconIds.join(',');
 
 axios.get(`https://thumbnails.roblox.com/v1/assets/?assetIds=${iconIdsString}&size=150x150&format=Webp`, {
   headers: {
-      'x-api-key': "nQ1Xy6GNPE6eJK9am42tLYTGo6HlxSYv053LYbilUtwSlV0GZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNkluTnBaeTB5TURJeExUQTNMVEV6VkRFNE9qVXhPalE1V2lJc0luUjVjQ0k2SWtwWFZDSjkuZXlKaVlYTmxRWEJwUzJWNUlqb2libEV4V0hrMlIwNVFSVFpsU2tzNVlXMDBNblJNV1ZSSGJ6WkliSGhUV1hZd05UTk1XV0pwYkZWMGQxTnNWakJISWl3aWIzZHVaWEpKWkNJNklqSTRNemN6TURnM0lpd2lZWFZrSWpvaVVtOWliRzk0U1c1MFpYSnVZV3dpTENKcGMzTWlPaUpEYkc5MVpFRjFkR2hsYm5ScFkyRjBhVzl1VTJWeWRtbGpaU0lzSW1WNGNDSTZNVGMwTnpVeU9URXlNU3dpYVdGMElqb3hOelEzTlRJMU5USXhMQ0p1WW1ZaU9qRTNORGMxTWpVMU1qRjkua1djSFUyQ013RTFhanFXdmQ0ak9EMDdLLUc2R3hIQXpjMHBDYWpJbUl6ekdXazF0dnlSdU9fSEVCbGRmRHFlMmlDNEp2TkpOV0pobk1DQUEwQ0wtTGtpZFg3OHltVlVQVHl6UllDSFg4Ni1KRjhEaEV2Um5lR2VhOUVqOTJlTHFmYjZwZWl1VmcxdnpFMmppU3lGVE1sY3VLUVhENTFGeUc1bXhDaVc1UTVsUnMzM2FCa1FoOU43RFVzRjlFeG5LZEhVSktCZDAtT2duN1pDOWNmQnZKcjlEU0RkWFp4MlZOclFXcDdBRXR2UkJDaldkX2lsbkxqZU1QTl9Jd2hRUWJPNnhSNElhQlU0MFVlSWp0am1UWjNUOUhtckFWTENwWXhicUw1LUh5a3NITWR6ckg4OV92WUVFQ04xYi1fNUJMMm0tYUlPMDNiMzVBZ3J4cVROOGRR"
+      'x-api-key': process.env.ROBLOX_USER_API_KEY
   }
 }).then(response => response.data.data).then(data => {
   for (const iconData of data) {
