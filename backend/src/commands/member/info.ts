@@ -4,7 +4,7 @@ import { ChatInputCommandInteraction, GuildMember, GuildMemberRoleManager } from
 import { Command, BuildCommand, OptionType, CommandData } from "../../utility/command";
 import { ErrorMessage } from "../../embeds/errorMessage";
 import { UserInfoEmbed } from "../../embeds/userInfo";
-import { getUserInfo, UserIdType } from "../../utility/getRobloxUserInfo";
+import { getUserInfo, UserIdType } from "../../classes/getRobloxUserInfo";
 
 async function execute(interaction: ChatInputCommandInteraction) {
     interaction.deferReply({ ephemeral: true });

@@ -25,7 +25,7 @@ const AccountsWidget: React.FC<AccountsWidgetProps> = ({ user, setUser }) => {
   };
 
   const handleUnlink = () => {
-    axios.post(`${BACKEND_URL}/unlink`, {}, {
+    axios.post(`${BACKEND_URL}/auth/unlink`, {}, {
       headers: {
         'Content-Type': 'application/json',
       },

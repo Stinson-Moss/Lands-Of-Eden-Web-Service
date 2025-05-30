@@ -46,7 +46,7 @@ const GroupManager: React.FC<GroupManagerProps> = ({
     setSearchError(null);
 
     try {
-      const foundGroupResponse = await axios.get(`${BACKEND_URL}/api/group/${groupIdInput}`);
+      const foundGroupResponse = await axios.get(`${BACKEND_URL}/groups/find/${groupIdInput}`, { withCredentials: true });
       const foundGroupData = foundGroupResponse.data;
 
       if (groups.some(group => group.Name === foundGroupData.Name)) {

@@ -2,6 +2,9 @@ import mysql, { RowDataPacket, FieldPacket } from 'mysql2/promise';
 import fs from 'fs';
 import path from 'path';
 import process from 'process';
+import dotenv from 'dotenv';
+
+dotenv.config({path: `.env.${process.env.NODE_ENV}`});
 
 const pathToCA = path.join(process.cwd(), process.env.DB_CA as string)
 

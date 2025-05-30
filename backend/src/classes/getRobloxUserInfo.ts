@@ -1,5 +1,6 @@
-import Database from "../classes/database";
-import Datastore from '../classes/Datastore';
+import Database from "./database";
+import Datastore from './Datastore';
+import axios from 'axios';
 
 interface UserInfo {
     username: string;
@@ -79,4 +80,25 @@ async function getUserInfo(userId: string, type: UserIdType): Promise<UserInfo> 
     }
 }
 
-export { getUserInfo, UserInfo, UserIdType };
+async function getRobloxInfoWithKey(userid: number) {
+    const userResponse = await axios.get(`https://apis.roblox.com/cloud/v2/users/${userid}`, {
+      headers: {
+        'x-api-key': process.env.ROBLOX_USER_API_KEY as string,
+      },
+    });
+  
+    const thumbnailResponse = await axios.get(`https://apis.roblox.com/cloud/v2/users/${userid}:generateThumbnail?size=60&format=PNG&shape=ROUND`,
+      {
+        headers: {
+          'x-api-key': process.env.ROBLOX_USER_API_KEY as string,
+        },
+      }
+    )
+  
+    return {
+      user: userResponse.data,
+      thumbnail: thumbnailResponse.data
+    }
+  }
+
+export { getUserInfo, getRobloxInfoWithKey, UserInfo, UserIdType };

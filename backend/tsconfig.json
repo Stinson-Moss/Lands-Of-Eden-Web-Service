@@ -8,7 +8,14 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@classes/*": ["src/classes/*"],
+      "@utility/*": ["src/utility/*"],
+      "@data/*": ["src/data/*"]
+    }
   },
   "include": ["src/**/*", "src/database.js"],
   "exclude": ["node_modules"]

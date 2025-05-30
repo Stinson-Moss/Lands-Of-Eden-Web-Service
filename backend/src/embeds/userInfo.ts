@@ -1,5 +1,5 @@
 import { EmbedBuilder, ColorResolvable } from "discord.js";
-import { UserInfo } from "../utility/getRobloxUserInfo";
+import { UserInfo } from "../classes/getRobloxUserInfo";
 
 function UserInfoEmbed(info: UserInfo) {
     return new EmbedBuilder()

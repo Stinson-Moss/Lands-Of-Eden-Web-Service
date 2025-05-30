@@ -15,6 +15,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleAuth = async () => {
+
       let code = new URLSearchParams(window.location.search).get('code');
       let state = new URLSearchParams(window.location.search).get('state');
       let [domain, csrf] = state?.split('----') || [];
@@ -23,9 +24,9 @@ const App: React.FC = () => {
       
       if (code && (!csrf || !domain || csrf !== Tokens.getCsrf())) {
         console.log('Invalid code or CSRF token')
-        console.log(code, csrf, domain, Tokens.getCsrf())
-        code = null;
-        domain = '';
+        console.log(csrf, Tokens.getCsrf())
+        // code = null;
+        // domain = '';
 
       }
       

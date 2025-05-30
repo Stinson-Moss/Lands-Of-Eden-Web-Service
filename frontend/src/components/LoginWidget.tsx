@@ -27,7 +27,7 @@ const LoginWidget: React.FC<LoginWidgetProps> = ({ user, setUser }) => {
   };
 
   const handleLogout = async () => {
-    await axios.post(`${BACKEND_URL}/logout`, {}, { withCredentials: true });
+    await axios.post(`${BACKEND_URL}/auth/logout`, {}, { withCredentials: true });
     setUser(null);
   };
 

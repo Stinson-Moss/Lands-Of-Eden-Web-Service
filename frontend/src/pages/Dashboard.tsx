@@ -38,7 +38,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       try {
 
         // TODO: CSRF protection
-        const serverResponse = await axios.get(`${BACKEND_URL}/api/servers`, {
+        const serverResponse = await axios.get(`${BACKEND_URL}/servers`, {
           withCredentials: true
         });
         const mutualServers = serverResponse.data;
@@ -64,7 +64,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       try {
         // TODO: CSRF protection
         // Get binding settings for selected server
-        const bindingsResponse = await axios.get(`${BACKEND_URL}/api/bindings/${selectedServer.id}`, {
+        const bindingsResponse = await axios.get(`${BACKEND_URL}/bindings/${selectedServer.id}`, {
           withCredentials: true
         });
         const bindingsData: RankBinding[] = bindingsResponse.data;
@@ -77,7 +77,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             fetchedGroups.push(groupList[groupBinding.groupName]);
           } else {
             try {
-              const groupResponse = await axios.get(`${BACKEND_URL}/api/group/${groupBinding.groupName}`, {
+              const groupResponse = await axios.get(`${BACKEND_URL}/groups/find/${groupBinding.groupName}`, {
                 withCredentials: true
               });
               const groupData = groupResponse.data;
@@ -181,7 +181,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         }
       }
 
-      await axios.post(`${BACKEND_URL}/api/bindings/${selectedServer?.id}`, JSON.stringify(bindingRequest), {
+      await axios.post(`${BACKEND_URL}/bindings/${selectedServer?.id}`, JSON.stringify(bindingRequest), {
         headers: {
           'Content-Type': 'application/json'
         },
