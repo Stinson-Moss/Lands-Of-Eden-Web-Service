@@ -1,8 +1,8 @@
-// const groups = require("./utility/groups.json");
+const groups = require("./data/groups.json");
 // const axios = require("axios");
 
-// const iconIds = Object.values(groups).map(group => group.Icon.match(/\d+/)?.[0] || '');
-// const iconIdsString = iconIds.join(',');
+const iconIds = Object.values(groups).map(group => group.Icon.match(/\d+/)?.[0] || '');
+const iconIdsString = iconIds.join(',');
 
 // axios.get(`https://thumbnails.roblox.com/v1/assets/?assetIds=${iconIdsString}&size=150x150&format=Webp`, {
 //     headers: {
@@ -20,7 +20,9 @@
 //   console.log(groups);
 // });
 
-const str = '1';
-const ste2 = 'no'
+// const str = '1';
+// const ste2 = 'no'
 
-console.log(parseInt(str), parseInt(ste2));
+// console.log(parseInt(str), parseInt(ste2));
+
+console.log(iconIds);

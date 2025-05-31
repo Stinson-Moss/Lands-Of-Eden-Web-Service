@@ -24,16 +24,12 @@ export async function verifySession(session: string | null, data: any | null) {
   };
   
   if (!session) {
-    console.log('No session found')
     return response;
   }
-
-  console.log('SESSION:', session)
 
   const { token, refreshToken } = JSON.parse(session);
 
   if (!token || !refreshToken) {
-    console.log('No token or refresh token found')
     return response;
   }
 
@@ -45,7 +41,6 @@ export async function verifySession(session: string | null, data: any | null) {
     const [rows] = await Database.query('SELECT token, refreshToken, tokenExpires FROM users WHERE token = ?', [token])
     
     if (!rows || (rows as any[]).length !== 1) {
-      console.log('No rows found')
       return response;
     }
     
@@ -53,13 +48,11 @@ export async function verifySession(session: string | null, data: any | null) {
   }
 
   if (!queryObject.token || !queryObject.refreshToken) {
-    console.log('No token or refresh token found')
     return response;
   }
 
   if (queryObject.tokenExpires < Date.now() / 1000) {
     if (queryObject.refreshToken !== refreshToken) {
-      console.log('Refresh token mismatch')
       return response;
     }
 
@@ -68,7 +61,6 @@ export async function verifySession(session: string | null, data: any | null) {
     response.data = sessionData;
     response.verified = true;
 
-    console.log('Session needs update')
     return response;
   }
 
@@ -80,6 +72,5 @@ export async function verifySession(session: string | null, data: any | null) {
     expiresIn: queryObject.tokenExpires
   }
 
-  console.log('Session verified')
   return response;
 } 
