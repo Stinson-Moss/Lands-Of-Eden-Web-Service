@@ -63,13 +63,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       setIsLoading(true);
       try {
         // TODO: CSRF protection
-        // Get binding settings for selected server
         const bindingsResponse = await axios.get(`${BACKEND_URL}/bindings/${selectedServer.id}`, {
           withCredentials: true
         });
         const bindingsData: RankBinding[] = bindingsResponse.data;
-
-        // Bindings are separated by group name, so we need to get the group data from each binding key
         const fetchedGroups: Group[] = [];
 
         for (const groupBinding of bindingsData) {
@@ -174,7 +171,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       }
 
       for (const binding of bindings) {
-        if (binding.id) {
+        const id = binding.id?.match(/^[0-9]+$/)?.[0];
+        if (id) {
           bindingRequest.update.push(binding);
         } else {
           bindingRequest.insert.push(binding);

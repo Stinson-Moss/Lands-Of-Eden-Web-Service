@@ -200,7 +200,6 @@ const RankRoleBindings: React.FC<RankRoleBindingsProps> = ({
     );
   }
 
-  console.log(`Groups: ${JSON.stringify(groups)}`)
   if (groups.length === 0) {
     return (
       <div className="bindings-empty">

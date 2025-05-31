@@ -1,0 +1,19 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "eden-links-eden-storage.h.aivencloud.com",
+            "port": 11747,
+            "driver": "MySQL",
+            "name": "eden",
+            "group": "eden",
+            "database": "defaultdb",
+            "username": "avnadmin",
+            "askForPassword": true
+        }
+    ]
+}

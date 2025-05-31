@@ -20,5 +20,7 @@
 //   console.log(groups);
 // });
 
-const bindings = JSON.stringify({});
-console.log(bindings);
+const str = '1';
+const ste2 = 'no'
+
+console.log(parseInt(str), parseInt(ste2));

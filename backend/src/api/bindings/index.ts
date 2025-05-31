@@ -5,6 +5,7 @@ import { COOKIE_EXPIRATION } from '@utility/constants';
 import DiscordClient from '@classes/discordclient';
 import Database from '@classes/database';
 import groups from '@data/groups.json';
+import { group } from 'node:console';
 
 interface rankBinding {
   groupName: string;
@@ -12,7 +13,7 @@ interface rankBinding {
   operator: string;
   secondaryRank?: number;
   roles: string[];
-  id?: string;
+  id: string | null;
 }
 
 const router = Router();
@@ -29,17 +30,12 @@ router.get('/:serverId', async (req, res) => {
     if (!serverId) {
       return res.status(400).json({ error: 'No server ID provided' });
     }
-    
   
     try {
       const [rows] = await Database.query('SELECT * FROM bindings WHERE serverId = ?', [serverId]);
-      let bindings = (rows as any[])[0];
-  
-      if (!bindings) {
-        bindings = {
-          serverId: serverId,
-          bindingSettings: []
-        }
+
+      if (rows.length === 0) {
+        return res.status(200).json([]);
       }
   
       if (sessionResponse.needsUpdate) {
@@ -57,7 +53,7 @@ router.get('/:serverId', async (req, res) => {
         });
       }
     
-      res.json(bindings.bindingSettings);
+      res.json(rows);
     } catch (error) {
         console.error('Error fetching bindings:', error);
         return res.status(500).json({ error: 'Failed to fetch bindings' });
@@ -81,18 +77,19 @@ router.post('/:serverId', async (req, res) => {
     }
   
     const serverId = req.params.serverId;
-    console.log('SERVER ID:', serverId)
     
-    if (!serverId) {
-      return res.status(400).json({ error: 'No server ID provided' });
+    const guild = DiscordClient.client.guilds.cache.get(serverId);
+
+    if (!guild) {
+      return res.status(404).json({ error: 'Server not found' });
     }
   
-    const discordMember = DiscordClient.client.guilds.cache.get(serverId)?.members.cache.get(queryObject.discordId);
-  
+    const discordMember = guild.members.cache.get(queryObject.discordId) ?? await guild.members.fetch(queryObject.discordId);
+
     if (!discordMember || !discordMember.permissions.has(PermissionsBitField.Flags.Administrator)) {
       return res.status(403).json({ error: 'Invalid permissions' });
     }
-    
+
     if (!req.body) {
       return res.status(400).json({ error: 'No body provided' });
     }
@@ -103,12 +100,12 @@ router.post('/:serverId', async (req, res) => {
     }
   
     const bindingRequest : {insert: rankBinding[], delete: string[], update: rankBinding[]} = req.body;
+    // binding length validation
+    if (bindingRequest.insert.length === 0 && bindingRequest.delete.length === 0 && bindingRequest.update.length === 0) {
+      return res.status(400).json({ error: 'No bindings provided' });
+    }
   
     for (const bindings of [bindingRequest.insert, bindingRequest.update]) {
-      // binding length validation
-      if (bindings.length === 0) {
-        return res.status(400).json({ error: 'No bindings provided' });
-      }
     
       if (bindings.length > 25) {
         return res.status(400).json({ error: 'Too many bindings provided' });
@@ -160,6 +157,13 @@ router.post('/:serverId', async (req, res) => {
         if (binding.rank > groupRankCount || binding.secondaryRank! > groupRankCount || binding.rank < 0 || binding.secondaryRank! < 1) {
           return res.status(400).json({ error: 'Invalid rank' });
         }
+
+        // binding id must be a number, any strings sent will be discarded
+        if (binding.id && !binding.id.match(/^[0-9]+$/)?.[0]) {
+          binding.id = null;
+        }
+
+        console.log('ID:', binding.id, binding.id?.match(/^[0-9]+$/)?.[0])
     
         // check roles
         const guild = DiscordClient.client.guilds.cache.get(serverId);
@@ -173,11 +177,10 @@ router.post('/:serverId', async (req, res) => {
       
     }
     
-    
     try {
       // add, delete, and update bindings
       await Database.query('START TRANSACTION');
-      
+      console.log('Starting transaction');
       // Add
       if (bindingRequest.insert && bindingRequest.insert.length > 0) {
         const values = bindingRequest.insert.map(binding => [
@@ -189,14 +192,16 @@ router.post('/:serverId', async (req, res) => {
           JSON.stringify(binding.roles)
         ]);
     
+        console.log('Inserting bindings');
         await Database.query(`
-          INSERT INTO bindings (serverId, groupName, rank, secondaryRank, operator, roles)
+          INSERT INTO bindings (serverId, groupName,\`rank\`, secondaryRank, operator, roles)
           VALUES ?
         `, [values]);
       }
   
       // Delete
-       if (bindingRequest.delete && bindingRequest.delete.length > 0) {
+      if (bindingRequest.delete && bindingRequest.delete.length > 0) {
+        console.log('Deleting bindings');
         await Database.query(`
           DELETE FROM bindings 
           WHERE id IN (?) AND serverId = ?
@@ -205,22 +210,23 @@ router.post('/:serverId', async (req, res) => {
   
       // Update
       if (bindingRequest.update.length > 0) {
-        const idList = bindingRequest.update.map(binding => binding.id);
-        
+        const idList = bindingRequest.update.map(binding => {
+          if (binding.id) {
+            return `'${binding.id}'`;
+          } else {
+            return 'NULL';
+          }
+        });
+
+        console.log('Updating bindings');
         const groupNameCases = bindingRequest.update.map(b => 
-          `WHEN ${b.id} THEN ?`).join(' ');
-        
-        const rankCases = bindingRequest.update.map(b => 
-          `WHEN ${b.id} THEN ?`).join(' ');
-        
-        const secondaryRankCases = bindingRequest.update.map(b => 
-          `WHEN ${b.id} THEN ?`).join(' ');
-        
-        const operatorCases = bindingRequest.update.map(b => 
-          `WHEN ${b.id} THEN ?`).join(' ');
-        
-        const rolesCases = bindingRequest.update.map(b => 
-          `WHEN ${b.id} THEN ?`).join(' ');
+          `WHEN '${b.id}' THEN ?`).join(' ');
+
+        // They're all the same string
+        const rankCases = groupNameCases
+        const secondaryRankCases = groupNameCases
+        const operatorCases = groupNameCases
+        const rolesCases = groupNameCases
   
         // Params in order
         const params = [
@@ -257,34 +263,12 @@ router.post('/:serverId', async (req, res) => {
             END
             WHERE id IN (${idList.join(',')}) AND serverId = ?
               `, params);
-        }
+      }
       
       await Database.query('COMMIT');
-    } catch (error) {
-      await Database.query('ROLLBACK');
-      console.error('Error saving binding:', error);
-      res.status(500).json({ error: 'Failed to save binding' });
-    }
-  
-    try {
-  
-      const values = bindingRequest.insert.map(binding => [
-        serverId,
-        binding.groupName,
-        binding.rank,
-        binding.secondaryRank || null,
-        binding.operator,
-        JSON.stringify(binding.roles)
-      ]);
-  
-      // save binding
-      await Database.query(`
-        INSERT INTO bindings (serverId, groupName, rank, secondaryRank, operator, roles)
-        VALUES ?
-      `, [values]);
-  
+
       if (sessionResponse.needsUpdate) {
-        Database.query(`
+        await Database.query(`
           UPDATE users
           SET token = ?, refreshToken = ?, tokenExpires = ?
           WHERE token = ?
@@ -299,7 +283,9 @@ router.post('/:serverId', async (req, res) => {
       });
   
       res.json({ success: true })
+
     } catch (error) {
+      await Database.query('ROLLBACK');
       console.error('Error saving binding:', error);
       res.status(500).json({ error: 'Failed to save binding' });
     }
