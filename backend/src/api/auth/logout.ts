@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import Database from '@classes/database';
 import { handleDatabaseError } from '@utility/error';
+import { eq } from 'drizzle-orm';
 
 const router = Router();
 
@@ -12,10 +13,11 @@ router.post('/logout', async (req, res) => {
       const { token } = JSON.parse(session);
       
       // Clear session data in database
-      await Database.query(
-        'UPDATE users SET token = NULL, refreshToken = NULL, tokenExpires = NULL WHERE token = ?',
-        [token]
-      );
+      await Database.update(Database.users).set({
+        token: null,
+        refreshToken: null,
+        tokenExpires: null
+      }).where(eq(Database.users.token, token));
     }
 
     res.clearCookie('session', {

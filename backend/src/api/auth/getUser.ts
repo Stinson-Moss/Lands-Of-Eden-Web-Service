@@ -1,6 +1,8 @@
-import { Router } from 'express';
 import axios from 'axios';
 import Database from '@classes/database';
+import { Router } from 'express';
+import { users } from '@db/schema';
+import { eq } from 'drizzle-orm';
 import { verifySession, generateSessionData } from '@utility/session';
 import { SESSION_EXPIRATION, COOKIE_EXPIRATION } from '@utility/constants';
 import { getRobloxInfoWithKey } from '@utility/roblox';
@@ -45,45 +47,37 @@ router.post('/getUser', async (req, res) => {
       
 
       // if the user exists in the database, update the tokens
-      const query = `
-        INSERT INTO users (
-          discordId, token, refreshToken, discordToken, discordRefreshToken, 
-          tokenExpires, discordTokenExpires, robloxId
-        ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?) 
-        ON DUPLICATE KEY UPDATE 
-          discordId = VALUES(discordId),
-          token = VALUES(token),
-          refreshToken = VALUES(refreshToken),
-          discordToken = VALUES(discordToken),
-          discordRefreshToken = VALUES(discordRefreshToken),
-          tokenExpires = VALUES(tokenExpires),
-          discordTokenExpires = VALUES(discordTokenExpires)
-      `
-      await Database.query(query, [
-        userResponse.data.id, 
-        sessionData.token, 
-        sessionData.refreshToken, 
-        access_token, 
-        refresh_token, 
-        Math.floor(Date.now() / 1000 + SESSION_EXPIRATION),
-        Math.floor(Date.now() / 1000 + expires_in),
-        null
-      ])
+      const now = Date.now();
+      const result = await Database.insert(users)
+      .values({
+        discordId: userResponse.data.id,
+        robloxId: null,
+        token: sessionData.token,
+        refreshToken: sessionData.refreshToken,
+        discordToken: access_token,
+        discordRefreshToken: refresh_token,
+        tokenExpires: Math.floor(now / 1000 + SESSION_EXPIRATION),
+        discordTokenExpires: Math.floor(now / 1000 + expires_in),
+      })
+      .onConflictDoUpdate({
+        target: users.discordId,
+        set: {
+          token: sessionData.token,
+          refreshToken: sessionData.refreshToken,
+          discordToken: access_token,
+          discordRefreshToken: refresh_token,
+          tokenExpires: Math.floor(Date.now() / 1000 + SESSION_EXPIRATION),
+          discordTokenExpires: Math.floor(Date.now() / 1000 + expires_in),
+        }
+      }).returning();
 
-      const [rows] = await Database.query(`
-        SELECT * 
-        FROM users 
-        WHERE discordId = ?`, 
-        [userResponse.data.id])
-
-      const queryObject = (rows as any[])[0]
+      const queryObject = result[0];
 
       if (!queryObject.token || !queryObject.refreshToken) {
         return res.status(401).json({ error: 'Invalid token: Tokens not found' });
       }
 
-      let robloxInfo = queryObject.robloxId && queryObject.robloxId > 0? await getRobloxInfoWithKey(queryObject.robloxId) : null
+      let robloxInfo = queryObject.robloxId && parseInt(queryObject.robloxId) > 0? await getRobloxInfoWithKey(parseInt(queryObject.robloxId)) : null
 
       res.cookie('session', JSON.stringify({token: sessionData.token, refreshToken: sessionData.refreshToken}), {
         httpOnly: true,
@@ -115,8 +109,8 @@ router.post('/getUser', async (req, res) => {
 
     try {
       let { token, refreshToken } = JSON.parse(session);
-      let [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [token])
-      let queryObject = (rows as any[])[0]
+      let result = await Database.select().from(users).where(eq(users.token, token));
+      let queryObject = result[0];
 
       const sessionResponse = await verifySession(session, queryObject);
 
@@ -124,8 +118,8 @@ router.post('/getUser', async (req, res) => {
         return res.status(401).json({ error: 'Invalid session' });
       }
   
-      const discordInfo = await getDiscordInfo(queryObject.discordToken, queryObject.discordRefreshToken, queryObject.discordTokenExpires)
-      const robloxInfo = queryObject.robloxId && queryObject.robloxId > 0? await getRobloxInfoWithKey(queryObject.robloxId) : null
+      const discordInfo = await getDiscordInfo(queryObject.discordToken!, queryObject.discordRefreshToken!, queryObject.discordTokenExpires!)
+      const robloxInfo = queryObject.robloxId && parseInt(queryObject.robloxId) > 0? await getRobloxInfoWithKey(parseInt(queryObject.robloxId)) : null
   
       let query: string | null = null;
       let sessionQuery = '';
@@ -133,12 +127,12 @@ router.post('/getUser', async (req, res) => {
       const updateFields = [];
   
       if (sessionResponse.needsUpdate) {
-        sessionQuery = `token = ?, refreshToken = ?, tokenExpires = ?`
+        sessionQuery = `token = $1, refreshToken = $2, tokenExpires = $3`
         updateFields.push(token, refreshToken, Math.floor(Date.now() / 1000 + SESSION_EXPIRATION))
       }
   
       if (discordInfo.token !== queryObject.discordToken) {
-        discordQuery = `discordToken = ?, discordRefreshToken = ?, discordTokenExpires = ?`
+        discordQuery = `discordToken = $1, discordRefreshToken = $2, discordTokenExpires = $3`
         updateFields.push(discordInfo.token, discordInfo.refreshToken, discordInfo.expiresIn)
       }
       // Combine all the queries
@@ -146,12 +140,12 @@ router.post('/getUser', async (req, res) => {
         query = `UPDATE users SET 
           ${sessionQuery}${discordQuery.length > 0 ? `,` : ''}
           ${discordQuery}
-          WHERE token = ?`;
+          WHERE token = $1`;
         
-        await Database.query(query, [
+        await Database.update(users).set({
           ...updateFields,
-          queryObject.token
-        ]);
+          token: queryObject.token
+        }).where(eq(users.token, queryObject.token!));
       }
   
       res.cookie('session', JSON.stringify({token: token, refreshToken: refreshToken}), {

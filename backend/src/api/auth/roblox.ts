@@ -3,6 +3,7 @@ import { getDiscordInfo } from '@utility/discord';
 import { getRobloxInfoWithKey } from '@utility/roblox';
 import { verifySession, generateSessionData } from '@utility/session';
 import { SESSION_EXPIRATION, COOKIE_EXPIRATION } from '@utility/constants';
+import { eq } from 'drizzle-orm';
 import axios from 'axios';
 import Database from '@classes/database';
 
@@ -15,8 +16,8 @@ router.post('/roblox', async (req, res) => {
 
     const session = req.cookies.session;
     let [token, refreshToken] = JSON.parse(session);
-    const [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [token]);
-    const queryObject = (rows as any[])[0];
+    const result = await Database.select().from(Database.users).where(eq(Database.users.token, token));
+    const queryObject = result[0];
 
     if (!queryObject) {
         return res.status(401).json({ error: 'Invalid session' });
@@ -34,8 +35,8 @@ router.post('/roblox', async (req, res) => {
     }
 
     try {
-      const discordInfo = await getDiscordInfo(queryObject.discordToken, queryObject.discordRefreshToken, queryObject.discordTokenExpires)
-      if (discordInfo.user.id !== queryObject.discordId) {
+      const discordInfo = await getDiscordInfo(queryObject.discordToken!, queryObject.discordRefreshToken!, queryObject.discordTokenExpires!)
+      if (discordInfo.user.id !== queryObject.discordId!) {
         return res.status(401).json({ error: 'Invalid token: Discord ID mismatch' });
       }
   
@@ -85,7 +86,10 @@ router.post('/roblox', async (req, res) => {
           ${robloxQuery}
           WHERE token = ?`;
           
-          await Database.query(query, [...updateFields, token])
+          await Database.update(Database.users).set({
+            ...updateFields,
+            token: token
+          }).where(eq(Database.users.token, token));
       }
   
       res.cookie('session', JSON.stringify({token: token, refreshToken: refreshToken}), {

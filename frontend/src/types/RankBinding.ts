@@ -2,7 +2,7 @@
 export type ComparisonOperator = '=' | '>=' | '<=' | 'between';
 
 interface RankBinding {
-    id: string;
+    id: string | number;
     serverId: string;
     groupName: string;
     rank: number;

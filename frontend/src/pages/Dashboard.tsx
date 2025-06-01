@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ServerSelector from '../components/dashboard/ServerSelector';
 import GroupManager from '../components/dashboard/GroupManager';
-import RankRoleBindings from '../components/dashboard/RankRoleBindings';
+import RankRoleBindings from '../components/rank-role-bindings/RankRoleBindings';
 import SaveChangesBar from '../components/dashboard/SaveChangesBar';
 import NegativeConfirmationDialog from '../components/NegativeConfirmationDialog';
 import { User } from '../types/Session';
@@ -18,7 +18,7 @@ interface DashboardProps {
 }
 
 const groupList: {[key: string]: Group} = {};
-const deletedBindings: string[] = [];
+const deletedBindings: (string | number)[] = [];
 
 const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   // State for servers, selected server, groups, and bindings
@@ -71,7 +71,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
         for (const groupBinding of bindingsData) {
           if (groupList[groupBinding.groupName]) {
-            fetchedGroups.push(groupList[groupBinding.groupName]);
+            if (!fetchedGroups.find(group => group.Name === groupBinding.groupName)) {
+              fetchedGroups.push(groupList[groupBinding.groupName]);
+            }
           } else {
             try {
               const groupResponse = await axios.get(`${BACKEND_URL}/groups/find/${groupBinding.groupName}`, {
@@ -136,14 +138,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   };
 
   // Handle binding removal
-  const handleRemoveBinding = (bindingId: string) => {
+  const handleRemoveBinding = (bindingId: string | number) => {
     if (deletedBindings.includes(bindingId)) {
       return;
     }
 
     if (bindings.some(binding => binding.id === bindingId)) {
-      if (parseInt(bindingId)) {
-        deletedBindings.push(bindingId);
+      if (typeof bindingId === 'number') {
+        deletedBindings.push(bindingId.toString());
       }
       
       setBindings(bindings.filter(binding => binding.id !== bindingId));
@@ -153,8 +155,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   // Handle binding update
   const handleUpdateBinding = (bindingId: string, rank: number, roles: string[], operator: ComparisonOperator, secondaryRank?: number) => {
+    console.log("New roles", roles);
     setBindings(bindings.map(binding => 
-      binding.id === bindingId ? { ...binding, rank, roles, operator, secondaryRank } : binding
+      binding.id === bindingId ? { 
+        groupName: binding.groupName,
+        serverId: binding.serverId, 
+        id: bindingId, 
+        rank: rank, 
+        roles: roles, 
+        operator: operator, 
+        secondaryRank: secondaryRank 
+      } : binding
     ));
     setHasChanges(true);
   };
@@ -171,23 +182,32 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       }
 
       for (const binding of bindings) {
-        const id = binding.id?.match(/^[0-9]+$/)?.[0];
-        if (id) {
+        if (typeof binding.id === 'number') {
           bindingRequest.update.push(binding);
         } else {
           bindingRequest.insert.push(binding);
         }
       }
 
-      await axios.post(`${BACKEND_URL}/bindings/${selectedServer?.id}`, JSON.stringify(bindingRequest), {
+      const newBindingsResponse = await axios.post(`${BACKEND_URL}/bindings/${selectedServer?.id}`, JSON.stringify(bindingRequest), {
         headers: {
           'Content-Type': 'application/json'
         },
         withCredentials: true
       });
 
+      const bindingList = newBindingsResponse.data;
+      for (const [oldId, newId] of Object.entries(bindingList)) {
+        const binding = bindings.find(binding => binding.id === oldId);
+
+        if (binding) {
+          binding.id = newId as string;
+        }
+      }
+
       deletedBindings.length = 0;
-      
+
+      setBindings([...bindings]);      
       setHasChanges(false);
     } catch (error) {
       console.error('Error saving changes:', error);

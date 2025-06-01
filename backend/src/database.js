@@ -1,20 +1,15 @@
 // create the schema for the database
-import mysql from 'mysql2/promise';
+import {Pool} from 'pg';
 import dotenv from 'dotenv';
 import fs from 'fs';
 dotenv.config();
 
-const connection = await mysql.createConnection({
+const pool = new Pool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 0,
-  port: parseInt(process.env.DB_PORT || '3306'),
+  port: parseInt(process.env.DB_PORT || '5432'),
 
   ssl: {
     ca: fs.readFileSync(process.env.DB_CA || ''),
@@ -36,96 +31,87 @@ CREATE TABLE IF NOT EXISTS users (
   discordTokenExpires BIGINT NOT NULL,
   robloxTokenExpires BIGINT,
 
-  PRIMARY KEY (discordId),
-  INDEX(discordId),
-  INDEX(robloxId),
-  INDEX(token),
-  INDEX(refreshToken)
-)
+  PRIMARY KEY (discordId)
+);
+
+CREATE INDEX IF NOT EXISTS users_discord_id_idx ON users(discordId);
+CREATE INDEX IF NOT EXISTS users_roblox_id_idx ON users(robloxId);
+CREATE INDEX IF NOT EXISTS users_token_idx ON users(token);
+CREATE INDEX IF NOT EXISTS users_refresh_token_idx ON users(refreshToken);
 `;
 
 const bindingSchema = `
 CREATE TABLE IF NOT EXISTS bindings (
   serverId VARCHAR(20) NOT NULL PRIMARY KEY,
-  bindingSettings JSON
+  bindingSettings JSONB
 )`;
 
-
 async function createSchema() {
-  await (await connection).execute(schema);
+  await pool.query(schema);
 }
 
 async function createBindingSchema() {
-  await (await connection).execute(bindingSchema);
+  await pool.query(bindingSchema);
 }
 
 async function changeSchema() {
-  await (await connection).execute(`
+  await pool.query(`
     ALTER TABLE users
-    MODIFY robloxId VARCHAR(32);
+    ALTER COLUMN robloxId TYPE VARCHAR(32);
   `);
-
-  connection.end();
 }
 
 async function changeBindingSchema() {
-  await (await connection).execute(`
+  await pool.query(`
     ALTER TABLE bindings
-
     DROP COLUMN bindingSettings,
-    DROP PRIMARY KEY,
- 
-    ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    ADD COLUMN groupName VARCHAR(50) NOT NULL,
-    ADD COLUMN \`rank\` INT NOT NULL,
+    DROP CONSTRAINT bindings_pkey,
+    ADD COLUMN id SERIAL PRIMARY KEY,
+    ADD COLUMN "groupName" VARCHAR(50) NOT NULL,
+    ADD COLUMN rank INT NOT NULL,
     ADD COLUMN secondaryRank INT,
     ADD COLUMN operator VARCHAR(10) NOT NULL,
-    ADD COLUMN roles JSON NOT NULL,
-    
-    ADD INDEX(groupName),
-    ADD INDEX(serverId);
+    ADD COLUMN roles JSONB NOT NULL
+  `);
+
+  // Create indexes separately
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS bindings_group_name_idx ON bindings("groupName");
+    CREATE INDEX IF NOT EXISTS bindings_server_id_idx ON bindings(serverId);
   `);
 }
 
 async function clear() {
-  await (await connection).execute(`
-    DELETE FROM users
-  `);
+  await pool.query(`DELETE FROM users`);
 }
 
 async function test() {
-  let [rows] = await (await connection).execute(`
-    SELECT * FROM users
-  `);
-
-  console.log(`CURRENT: ${JSON.stringify(rows)}`);
+  const result = await pool.query(`SELECT * FROM users`);
+  console.log(`CURRENT: ${JSON.stringify(result.rows)}`);
 
   // Add dummy data
-  await (await connection).execute(`
-    INSERT INTO users (discordId, robloxId, token, discordToken, robloxToken, refreshToken, discordRefreshToken, robloxRefreshToken, tokenExpires, discordTokenExpires, robloxTokenExpires)
-    VALUES ('1234567890', '1234567890', '1234567890', '1234567890', '1234567890', '1234567890', '1234567890', '1234567890', 1234567890, 1234567890, 1234567890)
-  `);
+  await pool.query(`
+    INSERT INTO users (
+      discordId, robloxId, token, discordToken, robloxToken, 
+      refreshToken, discordRefreshToken, robloxRefreshToken, 
+      tokenExpires, discordTokenExpires, robloxTokenExpires
+    )
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+  `, [
+    '1234567890', '1234567890', '1234567890', '1234567890', '1234567890',
+    '1234567890', '1234567890', '1234567890', 1234567890, 1234567890, 1234567890
+  ]);
   
   console.log('Added dummy data');
 
-  [rows] = await (await connection).execute(`
-    SELECT * FROM users
-  `);
+  const result2 = await pool.query(`SELECT * FROM users`);
+  console.log(`AFTER: ${JSON.stringify(result2.rows)}`);
 
-  console.log(`AFTER: ${JSON.stringify(rows)}`);
+  await pool.query(`DELETE FROM users`);
 
-  await (await connection).execute(`
-    DELETE FROM users
-  `);
-
-  [rows] = await (await connection).execute(`
-    SELECT * FROM users
-  `);
-
+  const result3 = await pool.query(`SELECT * FROM users`);
   console.log('Deleted dummy data');
-  console.log(`AFTER: ${JSON.stringify(rows)}`);
-
-  await (await connection).end();
+  console.log(`AFTER: ${JSON.stringify(result3.rows)}`);
 }
 
 async function main() {
@@ -134,37 +120,27 @@ async function main() {
 }
 
 async function printDatabase() {
-  let [rows] = await (await connection).execute(`
-    SELECT * FROM users
-  `);
-
-  console.log(JSON.stringify(rows));
+  const result = await pool.query(`SELECT * FROM users`);
+  console.log(JSON.stringify(result.rows));
 }
 
+// Uncomment the function you want to run
 // main().catch(err => {
 //   console.error(err);
-//   connection.end();
 // });
 
 // changeSchema().catch(err => {
 //   console.error(err);
-//   connection.end();
 // });
 
 // printDatabase().catch(err => {
 //   console.error(err);
-// }).finally(() => {
-//   connection.end();
 // });
 
 // createBindingSchema().catch(err => {
 //   console.error(err);
-// }).finally(() => {
-//   connection.end();
 // });
 
 changeBindingSchema().catch(err => {
   console.error(err);
-}).finally(() => {
-  connection.end();
 });

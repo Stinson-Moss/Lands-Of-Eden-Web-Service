@@ -1,6 +1,8 @@
 import crypto from 'crypto';
-import { SESSION_EXPIRATION } from './constants';
 import Database from '@classes/database';
+import { SESSION_EXPIRATION } from './constants';
+import { users } from '@db/schema';
+import { eq } from 'drizzle-orm';
 
 export function generateSessionData() {
   const access_token = crypto.randomBytes(32).toString('hex');
@@ -38,13 +40,17 @@ export async function verifySession(session: string | null, data: any | null) {
   if (data) {
     queryObject = data;
   } else {
-    const [rows] = await Database.query('SELECT token, refreshToken, tokenExpires FROM users WHERE token = ?', [token])
+    const result = await Database.select({
+      token: users.token,
+      refreshToken: users.refreshToken,
+      tokenExpires: users.tokenExpires
+    }).from(users).where(eq(users.token, token));
     
-    if (!rows || (rows as any[]).length !== 1) {
+    if (!result || result.length !== 1) {
       return response;
     }
     
-    queryObject = (rows as any[])[0]
+    queryObject = result[0];
   }
 
   if (!queryObject.token || !queryObject.refreshToken) {

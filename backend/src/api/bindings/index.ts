@@ -2,11 +2,10 @@ import { Router } from 'express';
 import { PermissionsBitField } from 'discord.js';
 import { verifySession } from '@utility/session';
 import { COOKIE_EXPIRATION } from '@utility/constants';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import DiscordClient from '@classes/discordclient';
 import Database from '@classes/database';
 import groups from '@data/groups.json';
-import { group } from 'node:console';
-
 interface rankBinding {
   groupName: string;
   rank: number;
@@ -32,18 +31,18 @@ router.get('/:serverId', async (req, res) => {
     }
   
     try {
-      const [rows] = await Database.query('SELECT * FROM bindings WHERE serverId = ?', [serverId]);
+      const result = await Database.select().from(Database.bindings).where(eq(Database.bindings.serverId, serverId));
 
-      if (rows.length === 0) {
+      if (result.length === 0) {
         return res.status(200).json([]);
       }
   
       if (sessionResponse.needsUpdate) {
-        Database.query(`
-          UPDATE users
-          SET token = ?, refreshToken = ?, tokenExpires = ?
-          WHERE token = ?
-        `, [sessionResponse.data.token, sessionResponse.data.refreshToken, sessionResponse.data.expiresIn, session]);
+        Database.update(Database.users).set({
+          token: sessionResponse.data.token,
+          refreshToken: sessionResponse.data.refreshToken,
+          tokenExpires: sessionResponse.data.expiresIn
+        }).where(eq(Database.users.token, session));
     
         res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
           httpOnly: true,
@@ -53,7 +52,7 @@ router.get('/:serverId', async (req, res) => {
         });
       }
     
-      res.json(rows);
+      res.json(result);
     } catch (error) {
         console.error('Error fetching bindings:', error);
         return res.status(500).json({ error: 'Failed to fetch bindings' });
@@ -63,8 +62,8 @@ router.get('/:serverId', async (req, res) => {
 router.post('/:serverId', async (req, res) => {
     const session = req.cookies.session;
   
-    const [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [JSON.parse(session).token]);
-    const queryObject = (rows as any[])[0];
+    const result = await Database.select().from(Database.users).where(eq(Database.users.token, JSON.parse(session).token));
+    const queryObject = result[0];
   
     if (!queryObject) {
       return res.status(401).json({ error: 'Invalid session' });
@@ -179,100 +178,101 @@ router.post('/:serverId', async (req, res) => {
     
     try {
       // add, delete, and update bindings
-      await Database.query('START TRANSACTION');
-      console.log('Starting transaction');
-      // Add
-      if (bindingRequest.insert && bindingRequest.insert.length > 0) {
-        const values = bindingRequest.insert.map(binding => [
-          serverId,
-          binding.groupName,
-          binding.rank,
-          binding.secondaryRank || null,
-          binding.operator,
-          JSON.stringify(binding.roles)
-        ]);
+      await Database.transaction(async (tx) => {
+        console.log('Starting transaction');
+        // Add
+        if (bindingRequest.insert && bindingRequest.insert.length > 0) {
+          const values = bindingRequest.insert.map(binding => ({
+            serverId: serverId,
+            groupName: binding.groupName,
+            rank: binding.rank,
+            secondaryRank: binding.secondaryRank || null,
+            operator: binding.operator,
+            roles: JSON.stringify(binding.roles)
+          }));
     
-        console.log('Inserting bindings');
-        await Database.query(`
-          INSERT INTO bindings (serverId, groupName,\`rank\`, secondaryRank, operator, roles)
-          VALUES ?
-        `, [values]);
-      }
+          console.log('Inserting bindings');
+          await tx.insert(Database.bindings).values(values);
+        }
   
-      // Delete
-      if (bindingRequest.delete && bindingRequest.delete.length > 0) {
-        console.log('Deleting bindings');
-        await Database.query(`
-          DELETE FROM bindings 
-          WHERE id IN (?) AND serverId = ?
-        `, [bindingRequest.delete, serverId]);
-      }
+        // Delete
+        if (bindingRequest.delete && bindingRequest.delete.length > 0) {
+          console.log('Deleting bindings');
+          
+          await tx.delete(Database.bindings)
+          .where(
+            and(
+              inArray(Database.bindings.id, bindingRequest.delete.map(id => parseInt(id))),
+              eq(Database.bindings.serverId, serverId)
+            )
+          );
+        }
   
-      // Update
-      if (bindingRequest.update.length > 0) {
-        const idList = bindingRequest.update.map(binding => {
-          if (binding.id) {
-            return `'${binding.id}'`;
-          } else {
-            return 'NULL';
-          }
-        });
+        // Update
+        if (bindingRequest.update.length > 0) {
+          const idList = bindingRequest.update.map(binding => {
+            if (binding.id) {
+              return `'${binding.id}'`;
+            } else {
+              return 'NULL';
+            }
+          });
 
-        console.log('Updating bindings');
-        const groupNameCases = bindingRequest.update.map(b => 
-          `WHEN '${b.id}' THEN ?`).join(' ');
+          console.log('Updating bindings');
+          const groupNameCases = bindingRequest.update.map(b => 
+            `WHEN '${b.id}' THEN ?`).join(' ');
 
-        // They're all the same string
-        const rankCases = groupNameCases
-        const secondaryRankCases = groupNameCases
-        const operatorCases = groupNameCases
-        const rolesCases = groupNameCases
-  
-        // Params in order
-        const params = [
-          ...bindingRequest.update.map(b => b.groupName),
-          ...bindingRequest.update.map(b => b.rank),
-          ...bindingRequest.update.map(b => b.secondaryRank || null),
-          ...bindingRequest.update.map(b => b.operator),
-          ...bindingRequest.update.map(b => JSON.stringify(b.roles)),
-          serverId
-        ];
-  
-        await Database.query(`
-          UPDATE bindings
-          SET 
-            groupName = CASE id
+          // They're all the same string
+          const rankCases = groupNameCases
+          const secondaryRankCases = groupNameCases
+          const operatorCases = groupNameCases
+          const rolesCases = groupNameCases
+    
+          // Params in order
+          const params = [
+            ...bindingRequest.update.map(b => b.groupName),
+            ...bindingRequest.update.map(b => b.rank),
+            ...bindingRequest.update.map(b => b.secondaryRank || null),
+            ...bindingRequest.update.map(b => b.operator),
+            ...bindingRequest.update.map(b => JSON.stringify(b.roles)),
+            serverId
+          ];
+
+          await tx.update(Database.bindings).set({
+            groupName: sql`CASE id
               ${groupNameCases}
               ELSE groupName
-            END,
-            \`rank\` = CASE id
+            END`,
+
+            rank: sql`CASE id
               ${rankCases}
               ELSE \`rank\`
-            END,
-            secondaryRank = CASE id
+            END`,
+
+            secondaryRank: sql`CASE id
               ${secondaryRankCases}
               ELSE secondaryRank
-            END,
-            operator = CASE id
+            END`,
+
+            operator: sql`CASE id
               ${operatorCases}
               ELSE operator
-            END,
-            roles = CASE id
+            END`,
+
+            roles: sql`CASE id
               ${rolesCases}
               ELSE roles
-            END
-            WHERE id IN (${idList.join(',')}) AND serverId = ?
-              `, params);
-      }
-      
-      await Database.query('COMMIT');
+            END`,
+          }).where(inArray(Database.bindings.id, idList.map(id => parseInt(id))));
+        }
+      });
 
       if (sessionResponse.needsUpdate) {
-        await Database.query(`
-          UPDATE users
-          SET token = ?, refreshToken = ?, tokenExpires = ?
-          WHERE token = ?
-        `, [sessionResponse.data.token, sessionResponse.data.refreshToken, sessionResponse.data.expiresIn, session])
+        await Database.update(Database.users).set({
+          token: sessionResponse.data.token,
+          refreshToken: sessionResponse.data.refreshToken,
+          tokenExpires: sessionResponse.data.expiresIn
+        }).where(eq(Database.users.token, session));
       }
   
       res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
@@ -285,7 +285,6 @@ router.post('/:serverId', async (req, res) => {
       res.json({ success: true })
 
     } catch (error) {
-      await Database.query('ROLLBACK');
       console.error('Error saving binding:', error);
       res.status(500).json({ error: 'Failed to save binding' });
     }

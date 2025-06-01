@@ -3,6 +3,7 @@ import Database from '@classes/database';
 import { verifySession } from '@utility/session';
 import { COOKIE_EXPIRATION } from '@utility/constants';
 import { getDiscordGuilds } from '@utility/discord';
+import { eq } from 'drizzle-orm';
 
 const router = Router();
 
@@ -10,8 +11,8 @@ router.get('', async (req, res) => {
     const session = req.cookies.session;
   const {token, refreshToken} = JSON.parse(session);
   
-  let [rows] = await Database.query('SELECT * FROM users WHERE token = ?', [token])
-  let queryObject = (rows as any[])[0]
+  const result = await Database.select().from(Database.users).where(eq(Database.users.token, token));
+  const queryObject = result[0];
   
   const sessionResponse = await verifySession(session, queryObject);
 
@@ -21,7 +22,7 @@ router.get('', async (req, res) => {
 
   try {
 
-    const discordGuilds = await getDiscordGuilds(queryObject.discordToken, queryObject.discordId);
+    const discordGuilds = await getDiscordGuilds(queryObject.discordToken!, queryObject.discordId!);
 
     if (!discordGuilds) {
       return res.status(500).json({ error: 'Failed to get discord guilds' });
@@ -29,11 +30,13 @@ router.get('', async (req, res) => {
     
     if (sessionResponse.needsUpdate) {
       // save the new session data
-      Database.query(`
-        UPDATE users
-        SET token = ?, refreshToken = ?, tokenExpires = ?
-        WHERE token = ?
-      `, [sessionResponse.data.token, sessionResponse.data.refreshToken, sessionResponse.data.expiresIn, queryObject.token])
+
+      Database.update(Database.users).set({
+        token: sessionResponse.data.token,
+        refreshToken: sessionResponse.data.refreshToken,
+        tokenExpires: sessionResponse.data.expiresIn
+      }).where(eq(Database.users.token, queryObject.token!));
+
       
       res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
         httpOnly: true,

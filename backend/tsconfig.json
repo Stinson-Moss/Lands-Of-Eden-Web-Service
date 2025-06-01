@@ -14,7 +14,8 @@
       "@/*": ["src/*"],
       "@classes/*": ["src/classes/*"],
       "@utility/*": ["src/utility/*"],
-      "@data/*": ["src/data/*"]
+      "@data/*": ["src/data/*"],
+      "@db/*": ["src/db/*"]
     }
   },
   "include": ["src/**/*", "src/database.js"],

@@ -3,6 +3,7 @@ import Database from '@classes/database';
 import { verifySession } from '@utility/session';
 import { handleDatabaseError } from '@utility/error';
 import { COOKIE_EXPIRATION } from '@utility/constants';
+import { eq } from 'drizzle-orm';
 
 const router = Router();
 
@@ -19,14 +20,12 @@ router.post('/unlink', async (req, res) => {
         
         if (sessionResponse.needsUpdate) {
             
-            const query = `UPDATE users
-            SET token = ?, refreshToken = ?, tokenExpires = ?, robloxId = NULL
-            WHERE token = ?`
-            await Database.query(query, 
-                [sessionResponse.data.token, 
-                    sessionResponse.data.refreshToken, 
-                    sessionResponse.data.expiresIn, token
-                ])
+            await Database.update(Database.users).set({
+                token: sessionResponse.data.token,
+                refreshToken: sessionResponse.data.refreshToken,
+                tokenExpires: sessionResponse.data.expiresIn,
+                robloxId: null
+            }).where(eq(Database.users.token, token));
 
             res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
                 httpOnly: true,
@@ -35,8 +34,9 @@ router.post('/unlink', async (req, res) => {
                 sameSite: 'none',
             });
         } else {
-            const query = `UPDATE users SET robloxId = NULL WHERE token = ?`
-            await Database.query(query, [token])
+            await Database.update(Database.users).set({
+                robloxId: null
+            }).where(eq(Database.users.token, token));
         }
 
         res.json({
