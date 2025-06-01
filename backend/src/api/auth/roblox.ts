@@ -15,8 +15,17 @@ const router = Router();
 router.post('/roblox', async (req, res) => {
 
     const session = req.cookies.session;
-    let [token, refreshToken] = JSON.parse(session);
-    const result = await Database.select().from(Database.users).where(eq(Database.users.token, token));
+    if (!session) {
+        return res.status(401).json({ error: 'No session found' });
+    }
+
+    const { code } = req.body;
+    if (!code) {
+      return res.status(400).json({ error: 'No code provided' });
+    }
+
+    const { token } = JSON.parse(session);
+    const result = await Database.pool.select().from(Database.users).where(eq(Database.users.token, token));
     const queryObject = result[0];
 
     if (!queryObject) {
@@ -27,11 +36,6 @@ router.post('/roblox', async (req, res) => {
 
     if (!sessionResponse.verified) {
         return res.status(401).json({ error: 'Invalid session' });
-    }
-
-    const { code } = req.body;
-    if (!code) {
-      return res.status(400).json({ error: 'No code provided' });
     }
 
     try {
@@ -59,40 +63,18 @@ router.post('/roblox', async (req, res) => {
         },
       });
   
-      let query: string | null = null;
-      let sessionQuery = '';
-      let discordQuery = '';
-      let robloxQuery = '';
-      const updateFields = [];
-  
-      if (sessionResponse.needsUpdate) {
-        sessionQuery = `token = ?, refreshToken = ?, tokenExpires = ?,`
-        updateFields.push(sessionResponse.data.token, sessionResponse.data.refreshToken, sessionResponse.data.expiresIn)
-      }
-  
-      if (discordInfo.token !== queryObject.discordToken) {
-        discordQuery = `discordToken = ?, discordRefreshToken = ?, discordTokenExpires = ?,`
-        updateFields.push(discordInfo.token, discordInfo.refreshToken, discordInfo.expiresIn)
-      }
-  
-      robloxQuery = `robloxId = ?`
-      updateFields.push(userResponse.data.sub)
-  
       // Combine all the queries
-      if (updateFields.length > 0) {
-        query = `UPDATE users SET 
-          ${sessionQuery}
-          ${discordQuery}
-          ${robloxQuery}
-          WHERE token = ?`;
-          
-          await Database.update(Database.users).set({
-            ...updateFields,
-            token: token
-          }).where(eq(Database.users.token, token));
-      }
+      await Database.pool.update(Database.users).set({
+        token: sessionResponse.data.token,
+        refreshToken: sessionResponse.data.refreshToken,
+        tokenExpires: sessionResponse.data.expiresIn,
+        discordToken: discordInfo.token,
+        discordRefreshToken: discordInfo.refreshToken,
+        discordTokenExpires: discordInfo.expiresIn,
+        robloxId: userResponse.data.sub
+      }).where(eq(Database.users.token, token));
   
-      res.cookie('session', JSON.stringify({token: token, refreshToken: refreshToken}), {
+      res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
         httpOnly: true,
         secure: true,
         maxAge: COOKIE_EXPIRATION,
@@ -119,4 +101,6 @@ router.post('/roblox', async (req, res) => {
       res.status(500).json({ error: 'Failed to exchange token' });
     }
   });
+
+export default router;
   

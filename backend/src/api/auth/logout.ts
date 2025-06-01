@@ -13,7 +13,7 @@ router.post('/logout', async (req, res) => {
       const { token } = JSON.parse(session);
       
       // Clear session data in database
-      await Database.update(Database.users).set({
+      await Database.pool.update(Database.users).set({
         token: null,
         refreshToken: null,
         tokenExpires: null
@@ -22,8 +22,8 @@ router.post('/logout', async (req, res) => {
 
     res.clearCookie('session', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
+      secure: true,
+      sameSite: 'none'
     });
 
     res.json({

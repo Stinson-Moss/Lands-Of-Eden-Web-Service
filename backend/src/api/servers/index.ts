@@ -9,9 +9,9 @@ const router = Router();
 
 router.get('', async (req, res) => {
     const session = req.cookies.session;
-  const {token, refreshToken} = JSON.parse(session);
+  const {token} = JSON.parse(session);
   
-  const result = await Database.select().from(Database.users).where(eq(Database.users.token, token));
+  const result = await Database.pool.select().from(Database.users).where(eq(Database.users.token, token));
   const queryObject = result[0];
   
   const sessionResponse = await verifySession(session, queryObject);
@@ -31,20 +31,21 @@ router.get('', async (req, res) => {
     if (sessionResponse.needsUpdate) {
       // save the new session data
 
-      Database.update(Database.users).set({
+      await Database.pool.update(Database.users).set({
         token: sessionResponse.data.token,
         refreshToken: sessionResponse.data.refreshToken,
         tokenExpires: sessionResponse.data.expiresIn
       }).where(eq(Database.users.token, queryObject.token!));
 
       
-      res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
-        httpOnly: true,
-        secure: true,
-        maxAge: COOKIE_EXPIRATION,
-        sameSite: 'none',
-      });
     }
+    
+    res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
+      httpOnly: true,
+      secure: true,
+      maxAge: COOKIE_EXPIRATION,
+      sameSite: 'none',
+    });
     
     res.json({
       guilds: discordGuilds.map(guild => {

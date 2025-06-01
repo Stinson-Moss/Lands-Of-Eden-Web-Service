@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, text, integer, jsonb } from "drizzle-orm/pg-core"
+import { pgTable, serial, varchar, text, integer, jsonb, index } from "drizzle-orm/pg-core"
 
 const users = pgTable("users", {
     discordId: varchar("discordId", { length: 20 }).primaryKey().notNull(),
@@ -13,7 +13,9 @@ const users = pgTable("users", {
     tokenExpires: integer("tokenExpires"),
     discordTokenExpires: integer("discordTokenExpires"),
     
-});
+}, (table) => [
+    index('tokenIdx').on(table.token),
+]);
 
 const bindings = pgTable("bindings", {
     id: serial("id").primaryKey(),
@@ -23,6 +25,8 @@ const bindings = pgTable("bindings", {
     secondaryRank: integer("secondaryRank"),
     operator: varchar("operator", { length: 10 }).notNull(),
     roles: jsonb("roles").notNull(),
-});
+}, (table) => [
+    index('serverIdIdx').on(table.serverId),
+]);
 
 export { users, bindings };

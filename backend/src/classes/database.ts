@@ -11,46 +11,46 @@ dotenv.config({path: `.env.${process.env.NODE_ENV}`});
 
 const pathToCA = path.join(process.cwd(), process.env.DB_CA as string)
 
-let pool: Pool = new Pool({
+let rawPool: Pool = new Pool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
     port: parseInt(process.env.DB_PORT || '5432'),
+    max: 18,
     ssl: {
         ca: fs.readFileSync(pathToCA),
         rejectUnauthorized: true,
     }
 });
 
+console.log(rawPool);
+
 class Database {
 
-    private static Instance = drizzle(pool);
+    static pool = drizzle(rawPool, {
+        schema: {
+            users,
+            bindings
+        }
+    });
 
     static users = users;
     static bindings = bindings;
 
-    static transaction: typeof this.Instance.transaction = this.Instance.transaction;
-    static select: typeof this.Instance.select = this.Instance.select;
-    static insert: typeof this.Instance.insert = this.Instance.insert;
-    static update: typeof this.Instance.update = this.Instance.update;
-    static delete: typeof this.Instance.delete = this.Instance.delete;
-
     static async getUserByDiscord(discordId : string) {
-        const result = await this.Instance.select()
+        const result = await this.pool.select()
         .from(users).where(eq(users.discordId, discordId));
 
         return result[0];
     }
       
     static async getUserByRoblox(robloxId : string) {
-        const result = await this.Instance.select()
+        const result = await this.pool.select()
         .from(users).where(eq(users.robloxId, robloxId));
 
         return result[0];
     }
-
-
 }
 
 export default Database;

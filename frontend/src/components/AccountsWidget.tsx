@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
 import './AccountsWidget.css';
-import { User } from '../types/Session';
+import React, { useState } from 'react';
 import NegativeConfirmationDialog from './NegativeConfirmationDialog';
 import axios from 'axios';
+import Tokens from '../classes/Tokens';
+import { User } from '../types/Session';
 
 interface AccountsWidgetProps {
   user: User | null;
@@ -20,7 +21,9 @@ const AccountsWidget: React.FC<AccountsWidgetProps> = ({ user, setUser }) => {
       // Show confirmation dialog instead of immediately unlinking
       setShowConfirmation(true);
     } else {
-      window.location.href = ROBLOX_OAUTH;
+      const state = crypto.randomUUID();
+      Tokens.setCsrf(state);
+      window.location.href = `${ROBLOX_OAUTH}----${state}`;
     }
   };
 

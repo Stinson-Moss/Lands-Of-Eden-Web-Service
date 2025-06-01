@@ -31,27 +31,28 @@ router.get('/:serverId', async (req, res) => {
     }
   
     try {
-      const result = await Database.select().from(Database.bindings).where(eq(Database.bindings.serverId, serverId));
+      const result = await Database.pool.select().from(Database.bindings).where(eq(Database.bindings.serverId, serverId));
 
       if (result.length === 0) {
         return res.status(200).json([]);
       }
   
       if (sessionResponse.needsUpdate) {
-        Database.update(Database.users).set({
+        Database.pool.update(Database.users).set({
           token: sessionResponse.data.token,
           refreshToken: sessionResponse.data.refreshToken,
           tokenExpires: sessionResponse.data.expiresIn
         }).where(eq(Database.users.token, session));
     
-        res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
-          httpOnly: true,
-          secure: true,
-          maxAge: COOKIE_EXPIRATION,
-          sameSite: 'none',
-        });
       }
-    
+      
+      res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
+        httpOnly: true,
+        secure: true,
+        maxAge: COOKIE_EXPIRATION,
+        sameSite: 'none',
+      });
+      
       res.json(result);
     } catch (error) {
         console.error('Error fetching bindings:', error);
@@ -62,7 +63,7 @@ router.get('/:serverId', async (req, res) => {
 router.post('/:serverId', async (req, res) => {
     const session = req.cookies.session;
   
-    const result = await Database.select().from(Database.users).where(eq(Database.users.token, JSON.parse(session).token));
+    const result = await Database.pool.select().from(Database.users).where(eq(Database.users.token, JSON.parse(session).token));
     const queryObject = result[0];
   
     if (!queryObject) {
@@ -178,7 +179,7 @@ router.post('/:serverId', async (req, res) => {
     
     try {
       // add, delete, and update bindings
-      await Database.transaction(async (tx) => {
+      await Database.pool.transaction(async (tx) => {
         console.log('Starting transaction');
         // Add
         if (bindingRequest.insert && bindingRequest.insert.length > 0) {
@@ -268,22 +269,22 @@ router.post('/:serverId', async (req, res) => {
       });
 
       if (sessionResponse.needsUpdate) {
-        await Database.update(Database.users).set({
+        await Database.pool.update(Database.users).set({
           token: sessionResponse.data.token,
           refreshToken: sessionResponse.data.refreshToken,
           tokenExpires: sessionResponse.data.expiresIn
         }).where(eq(Database.users.token, session));
+        
       }
-  
+      
       res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
         httpOnly: true,
         secure: true,
         maxAge: COOKIE_EXPIRATION,
         sameSite: 'none',
       });
-  
-      res.json({ success: true })
 
+      res.json({ success: true })
     } catch (error) {
       console.error('Error saving binding:', error);
       res.status(500).json({ error: 'Failed to save binding' });

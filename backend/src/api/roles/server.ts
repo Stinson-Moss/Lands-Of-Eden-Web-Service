@@ -2,6 +2,9 @@ import DiscordClient from '@classes/discordclient';
 import { Router } from 'express';
 import { Guild } from 'discord.js';
 import { verifySession } from '@utility/session';
+import { eq } from 'drizzle-orm';
+import { COOKIE_EXPIRATION } from '@utility/constants';
+import Database from '@classes/database';
 
 const router = Router();
 
@@ -26,17 +29,30 @@ router.get('/:serverId', async (req, res) => {
     return res.status(404).json({ error: 'Server not found' });
   }
 
-  const roles = server.roles.cache.map(role => {
+  if (sessionResponse.needsUpdate) {
+    await Database.pool.update(Database.users).set({
+      token: sessionResponse.data.token,
+      refreshToken: sessionResponse.data.refreshToken,
+      tokenExpires: sessionResponse.data.expiresIn
+    }).where(eq(Database.users.token, sessionResponse.data.token));
+
+  }
+  
+  res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
+    httpOnly: true,
+    secure: true,
+    maxAge: COOKIE_EXPIRATION,
+    sameSite: 'none',
+  });
+
+  res.json(server.roles.cache.map(role => {
     return {
       id: role.id,
       name: role.name,
       color: role.color,
       position: role.position
     }
-  })
-
-  res.json(roles)
-
-})
+  }));
+});
 
 export default router; 

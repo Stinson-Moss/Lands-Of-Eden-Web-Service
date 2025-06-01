@@ -1,0 +1,1 @@
+CREATE INDEX "serverIdIdx" ON "bindings" USING btree ("serverId");

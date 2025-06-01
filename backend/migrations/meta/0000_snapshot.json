@@ -1,0 +1,159 @@
+{
+  "id": "d963abac-9352-42c4-b4ac-0bd84b836ac5",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.bindings": {
+      "name": "bindings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "serverId": {
+          "name": "serverId",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "groupName": {
+          "name": "groupName",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rank": {
+          "name": "rank",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "secondaryRank": {
+          "name": "secondaryRank",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "operator": {
+          "name": "operator",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "roles": {
+          "name": "roles",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "discordId": {
+          "name": "discordId",
+          "type": "varchar(20)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "robloxId": {
+          "name": "robloxId",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discordToken": {
+          "name": "discordToken",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refreshToken": {
+          "name": "refreshToken",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discordRefreshToken": {
+          "name": "discordRefreshToken",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tokenExpires": {
+          "name": "tokenExpires",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discordTokenExpires": {
+          "name": "discordTokenExpires",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "tokenIdx": {
+          "name": "tokenIdx",
+          "columns": [
+            {
+              "expression": "token",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_robloxId_unique": {
+          "name": "users_robloxId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "robloxId"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
