@@ -4,13 +4,40 @@ import { ChatInputCommandInteraction, PermissionsBitField, GuildMemberRoleManage
 import { Command, BuildCommand, OptionType, OptionData, CommandData } from "../../utility/command";
 import { ErrorMessage } from "../../embeds/errorMessage";
 import { SuccessfulRolesUpdate } from "../../embeds/rolesUpdated";
-import Database from "../../classes/database";
-import Datastore from "../../classes/Datastore";
+import { eq } from "drizzle-orm";
+import Database from "@classes/database";
+import Datastore from "@classes/Datastore";
+
+type BindingOperation = "=" | ">=" | "<=" | "between";
+interface Binding {
+    serverId: string;
+    operator: BindingOperation;
+    rank: number;
+    secondaryRank: number | null;
+    roles: string[];
+}
+
+function evaluateOperation(targetRank: number, operation: BindingOperation, evalRank1: number, evalRank2: number | null) {
+    switch (operation) {
+        case "=":
+            return targetRank === evalRank1;
+        case ">=":
+            return targetRank >= evalRank1;
+        case "<=":
+            return targetRank <= evalRank1;
+        case "between":
+            return targetRank >= evalRank1 && targetRank <= evalRank2!;
+        default:
+            return false;
+    }
+}
 
 async function execute(interaction: ChatInputCommandInteraction) {
     const member = interaction.options.getMember("user");
     const interactionMember = interaction.member;
     let targetMember : GuildMember = interaction.member as GuildMember;
+
+    interaction.deferReply({ephemeral: true});
 
     if (member) {
 
@@ -21,7 +48,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
             await interaction.reply({
                 embeds: [ErrorMessage(
                     "Command Error",
-                    "You do not have permission to use this command"
+                    "You do not have permission to use this command on other members"
                 )]
             });
             return;
@@ -31,10 +58,10 @@ async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     const memberRoles = targetMember.roles as GuildMemberRoleManager;
-    let memberRobloxId = await Database.getUserByDiscord(targetMember.id);
+    let userData = await Database.getUserByDiscord(targetMember.id);
     
-    if (!memberRobloxId) {
-        await interaction.reply({
+    if (!userData) {
+        await interaction.editReply({
             embeds: [ErrorMessage(
                 "Command Error",
                 "User is not linked to a Roblox account"
@@ -43,11 +70,22 @@ async function execute(interaction: ChatInputCommandInteraction) {
         return;
     }
 
-    memberRobloxId = memberRobloxId.robloxId;
+    const memberRobloxId = userData.robloxId;
+    if (!memberRobloxId) {
+        await interaction.editReply({
+            embeds: [ErrorMessage(
+                "Command Error",
+                `${member == interaction.member ? "You are" : "The user is"} not linked to a Roblox account`
+            )]
+        });
+
+        return;
+    }
+
     const groupData = await Datastore.GetEntry(memberRobloxId);
 
     if (!groupData) {
-        await interaction.reply({
+        await interaction.editReply({
             embeds: [ErrorMessage(
                 "Command Error",
                 "User is not a member of any group"
@@ -56,37 +94,43 @@ async function execute(interaction: ChatInputCommandInteraction) {
         return;
     }
 
-    const addedRoles : any[] = [];
-    const removedRoles : any[] = [];
+    const addedRoles : string[] = [];
+    const removedRoles : string[] = [];
+    const guildId = interaction.guild?.id;
 
-    const bindingSettings = await Database.getGroupBindings(interaction.guild?.id ?? "", groupData.groupId);
-    for (const groupBinding of bindingSettings.groups) {
-        for (const [rankId, roles] of Object.entries(groupBinding)) {
-            if (groupData.rankId === parseInt(rankId)) {
-                for (const roleId of roles as any[]) {
-                    if (!memberRoles.cache.has(roleId)) {
-                        addedRoles.push(roleId);
-                    }
-                }
-            } else {
-                for (const roleId of roles as any[]) {
-                    if (memberRoles.cache.has(roleId)) {
-                        removedRoles.push(roleId);
-                    }
-                }
-            }
+    const bindings: Binding[] = guildId ? await Database.pool.select().from(Database.bindings)
+    .where(eq(Database.bindings.serverId, guildId)) as Binding[] : [];
+
+    if (bindings.length === 0) {
+        await interaction.editReply({
+            embeds: [SuccessfulRolesUpdate(
+                "Roles Updated",
+                "No bindings found for this server",
+                [],
+                []
+            )]
+        });
+        return;
+    }
+
+    for (const groupBinding of bindings) {
+        if (evaluateOperation(groupData.rankId, groupBinding.operator as BindingOperation, groupBinding.rank, groupBinding.secondaryRank)) {
+            addedRoles.push(...groupBinding.roles);
         }
     }
 
-    for (const roleId of addedRoles) {
-        await targetMember.roles.add(roleId);
+    for (const [roleId] of memberRoles.cache) {
+        if (!addedRoles.includes(roleId)) {
+            removedRoles.push(roleId);
+        }
     }
 
-    for (const roleId of removedRoles) {
-        await targetMember.roles.remove(roleId);
-    }
+    await Promise.all([
+        ...addedRoles.map(roleId => targetMember.roles.add(roleId)),
+        ...removedRoles.map(roleId => targetMember.roles.remove(roleId))
+    ]);
 
-    await interaction.reply({
+    await interaction.editReply({
         embeds: [SuccessfulRolesUpdate(
             "Roles Updated",
             "Roles updated successfully",

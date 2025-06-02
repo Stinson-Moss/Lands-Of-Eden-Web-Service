@@ -17,7 +17,11 @@ declare module 'discord.js' {
   }
 }
 
-dotenv.config({path: `.env.${process.env.NODE_ENV}`});
+if (process.env.NODE_ENV === 'development') {
+  dotenv.config({path: `.env.development`});
+} else {
+  dotenv.config();
+}
 
 const app = express();
 

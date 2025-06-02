@@ -1,13 +1,17 @@
 import { drizzle } from "drizzle-orm/node-postgres"
 import { eq } from "drizzle-orm"
 import { users, bindings} from "../db/schema";
-import {Pool} from 'pg';
+import { Pool } from 'pg';
 import fs from 'fs';
 import path from 'path';
 import process from 'process';
 import dotenv from 'dotenv';
 
-dotenv.config({path: `.env.${process.env.NODE_ENV}`});      
+if (process.env.NODE_ENV === 'development') {
+    dotenv.config({path: `.env.development`});      
+} else {
+    dotenv.config({path: '.env'});      
+}
 
 const pathToCA = path.join(process.cwd(), process.env.DB_CA as string)
 
@@ -23,8 +27,6 @@ let rawPool: Pool = new Pool({
         rejectUnauthorized: true,
     }
 });
-
-console.log(rawPool);
 
 class Database {
 
