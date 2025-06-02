@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "start": "node dist/index.js",
+    "start": "node -r tsconfig-paths/register dist/index.js",
     "build": "tsc && npm prune --production",
     "dev": "cross-env NODE_ENV=development ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/index.ts",
     "db:generate": "npx drizzle-kit generate:pg --schema ./src/db/schema.ts --out ./src/db/migrations",
