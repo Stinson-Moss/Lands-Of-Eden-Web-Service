@@ -75,13 +75,16 @@ for (const folder of cmdFolders) {
     }
 }
 
+console.log(`Loaded ${client.commands.size} commands`);
+
 // Event handlers
 const eventFolder = path.join(__dirname, 'events');
-const eventFiles = fs.readdirSync(eventFolder).filter(file => file.endsWith('.ts'));
+const eventFiles = fs.readdirSync(eventFolder).filter(file => file.endsWith(suffix));
 
 for (const file of eventFiles) {
     const filePath = path.join(eventFolder, file);
     const event = require(filePath);
+
     if (event.once) {
         client.once(event.name, (...args) => event.execute(...args));
     } else {
