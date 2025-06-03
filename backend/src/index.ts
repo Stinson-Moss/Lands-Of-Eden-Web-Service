@@ -53,13 +53,15 @@ client.commands = new Collection();
 
 console.log('Starting bot...');
 
+const suffix = process.env.NODE_ENV === 'development' ? '.ts' : '.js';
+
 // commands
 const cmdFoldersPath = path.join(__dirname, 'commands');
 const cmdFolders = fs.readdirSync(cmdFoldersPath);
 
 for (const folder of cmdFolders) {
     const cmdPath = path.join(cmdFoldersPath, folder);
-    const cmdFiles = fs.readdirSync(cmdPath).filter(file => file.endsWith('.ts'));
+    const cmdFiles = fs.readdirSync(cmdPath).filter(file => file.endsWith(suffix));
 
     for (const file of cmdFiles) {
         const filePath = path.join(cmdPath, file);
