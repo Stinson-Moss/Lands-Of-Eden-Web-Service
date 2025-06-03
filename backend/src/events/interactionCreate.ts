@@ -39,8 +39,9 @@ export = {
         //     return;
         // }
 
+        console.log('INTERACTION CREATE');
         if (!interaction.isChatInputCommand()) return;
-
+        console.log('INTERACTION CREATE 2');
         const command = interaction.client.commands.get(interaction.commandName)
     
         if (!command) {
