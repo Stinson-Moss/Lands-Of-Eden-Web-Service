@@ -37,6 +37,8 @@ router.get('/:serverId', async (req, res) => {
     }).where(eq(Database.users.token, sessionResponse.data.token));
 
   }
+
+  const validRoles = server.roles.cache.filter(role => role.name !== '@everyone' && !role.managed);
   
   res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
     httpOnly: true,
@@ -45,7 +47,7 @@ router.get('/:serverId', async (req, res) => {
     sameSite: 'none',
   });
 
-  res.json(server.roles.cache.map(role => {
+  res.json(validRoles.map(role => {
     return {
       id: role.id,
       name: role.name,

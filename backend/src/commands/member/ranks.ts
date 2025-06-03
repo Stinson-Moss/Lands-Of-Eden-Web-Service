@@ -1,8 +1,9 @@
 // Member command: View ranks in a specific group 
 import { ChatInputCommandInteraction, EmbedBuilder } from "discord.js";
-import { BuildCommand, CommandData, OptionType } from "../../utility/command";
-import { ErrorMessage } from "../../embeds/errorMessage";
-import Datastore from "../../classes/Datastore";
+import { BuildCommand, CommandData, OptionType } from "@/utility/command";
+import { ErrorMessage } from "@/embeds/errorMessage";
+import groups from "@/data/groups.json";
+import Datastore from "@/classes/Datastore";
 
 const commandData: CommandData = {
     name: "ranks",
@@ -30,9 +31,8 @@ async function execute(interaction: ChatInputCommandInteraction) {
         return;
     }
 
-    const groupData = await Datastore.GetEntry(group);
-    
-    
+    const groupData = groups[group as keyof typeof groups];
+
     if (!groupData) {
         await interaction.reply({
             embeds: [ErrorMessage(
@@ -42,17 +42,15 @@ async function execute(interaction: ChatInputCommandInteraction) {
         });
         return;
     }
-    
-    const groupInfo = groupData.json();
-    const ranks = groupInfo.Ranks.map((rank: any, index: any) => `**Rank ${index + 1}**: ${rank}`);
+
+    const ranks = Object.entries(groupData.Ranks).map(([rankId, name]) => `${rankId}. ${name}`);
 
     const embed = new EmbedBuilder()
-        .setTitle(`${group} Ranks`)
+        .setTitle(`${group}`)
         .addFields([
             {
                 name: "Ranks",
-                value: ranks.join("\n"),
-                inline: true
+                value: ranks.join("\n")
             }
         ])
     
