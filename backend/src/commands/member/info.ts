@@ -1,13 +1,13 @@
 // Member command: Get user information 
 
 import { ChatInputCommandInteraction, GuildMember, GuildMemberRoleManager } from "discord.js";
-import { Command, BuildCommand, OptionType, CommandData } from "../../utility/command";
-import { ErrorMessage } from "../../embeds/errorMessage";
-import { UserInfoEmbed } from "../../embeds/userInfo";
-import { getUserInfo, UserIdType } from "../../classes/getRobloxUserInfo";
+import { Command, BuildCommand, OptionType, CommandData } from "@/utility/command";
+import { ErrorMessage } from "@/embeds/errorMessage";
+import { UserInfoEmbed } from "@/embeds/userInfo";
+import { getUserInfo, UserIdType } from "@/classes/getRobloxUserInfo";
 
 async function execute(interaction: ChatInputCommandInteraction) {
-    interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ ephemeral: true });
 
     const discordUser = interaction.options.getMember("user_discord");
     const robloxUser = interaction.options.getString("user_roblox");

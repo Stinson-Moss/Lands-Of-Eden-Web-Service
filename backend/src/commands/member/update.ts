@@ -37,7 +37,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
     const interactionMember = interaction.member;
     let targetMember : GuildMember = interaction.member as GuildMember;
 
-    interaction.deferReply({ephemeral: true});
+    await interaction.deferReply({ephemeral: true});
 
     if (member) {
 
