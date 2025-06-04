@@ -21,6 +21,10 @@ const groupList: {[key: string]: Group} = {};
 const deletedBindings: (string | number)[] = [];
 
 const Dashboard: React.FC<DashboardProps> = ({ user }) => {
+  if (!user?.discord || !user.discord.id) {
+    window.location.href = '/';
+  }
+  
   // State for servers, selected server, groups, and bindings
   const [servers, setServers] = useState<Server[]>([]);
   const [selectedServer, setSelectedServer] = useState<Server | null>(null);
@@ -30,6 +34,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [requestedServer, setRequestedServer] = useState<Server | null>(null);
+
 
   // Get the servers
   useEffect(() => {

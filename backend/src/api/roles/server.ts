@@ -38,7 +38,7 @@ router.get('/:serverId', async (req, res) => {
 
   }
 
-  const validRoles = server.roles.cache.filter(role => role.name !== '@everyone' && !role.managed);
+  const validRoles = server.roles.cache.filter(role => role.name !== '@everyone' && !role.managed).sort((a, b) => a.name.localeCompare(b.name));
   
   res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
     httpOnly: true,

@@ -1,4 +1,4 @@
-import {ChatInputCommandInteraction, SlashCommandBuilder, SlashCommandSubcommandBuilder } from 'discord.js';
+import {ChatInputCommandInteraction, PermissionsBitField, SlashCommandBuilder, SlashCommandSubcommandBuilder } from 'discord.js';
 
 enum OptionType {
     INTEGER = 1,
@@ -22,6 +22,7 @@ interface CommandData {
     description: string;
     options?: any[];
     subcommands?: CommandData[];
+    permissions?: bigint;
 }
 
 interface OptionData {
@@ -34,7 +35,7 @@ interface OptionData {
 function BuildSubCommand(data: CommandData): SlashCommandSubcommandBuilder {
     const subcommand = new SlashCommandSubcommandBuilder()
         .setName(data.name)
-        .setDescription(data.description);
+        .setDescription(data.description)
 
     if (data.options) {
         for (const optionData of data.options) {
@@ -85,7 +86,8 @@ function BuildSubCommand(data: CommandData): SlashCommandSubcommandBuilder {
 function BuildCommand(data: CommandData, execute: (interaction: ChatInputCommandInteraction) => Promise<void>): Command {
     const slashCommand = new SlashCommandBuilder()
         .setName(data.name)
-        .setDescription(data.description);
+        .setDescription(data.description)
+        .setDefaultMemberPermissions(data.permissions ?? PermissionsBitField.Default);
 
     if (data.options) {
         for (const optionData of data.options) {
