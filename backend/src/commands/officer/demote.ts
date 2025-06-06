@@ -9,20 +9,15 @@ import Datastore from "@/classes/datastore";
 import PlayerData from "@utility/playerData"
 import Groups from "@data/groups.json"
 import setRank from "@/utility/setrank";
+import canRankUser from "@/utility/canrankuser";
+
+const EDEN_GROUP = process.env.ROBLOX_GROUP_ID;
 
 async function commandError(interaction: ChatInputCommandInteraction, message: string) {
     await interaction.editReply({
         embeds: [ErrorMessage("Command Error", message)]
     });
-}
-
-function canRankUser(setterRank: number, userRank: number, group: string, targetRank: number) {
-    const groupData = Groups[group as keyof typeof Groups];
-
-    return setterRank >= userRank
-        && setterRank >= groupData.Classes.Officer
-        && targetRank < setterRank;
-}
+}   
 
 async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply({ ephemeral: true });
@@ -30,8 +25,6 @@ async function execute(interaction: ChatInputCommandInteraction) {
     const rankSetter = interaction.member;
     const discordUser = interaction.options.getMember("user");
     const group = interaction.options.getString("group");
-    const rank = interaction.options.getNumber("rank") ?? interaction.options.getString("rank");
-
 
     if (!group) {
         await commandError(interaction, "No group provided");
@@ -43,13 +36,8 @@ async function execute(interaction: ChatInputCommandInteraction) {
         return;
     }
 
-    if (!rank) {
-        await commandError(interaction, "No rank provided");
-        return;
-    }
-
     if (!discordUser || (discordUser as GuildMember).id === interaction.user.id) {
-        await commandError(interaction, "You cannot set your own rank");
+        await commandError(interaction, "No user provided");
         return;
     }
 
@@ -91,31 +79,23 @@ async function execute(interaction: ChatInputCommandInteraction) {
         
         if (!userData) {
             await commandError(interaction, "User has no data");
-            
             return;
         }
-        
-        if (!canRankUser(setterData.Ranks[group], userData.Ranks[group], group, Number(rank))) {
-            await commandError(interaction, "You do not have valid permissions to set this rank to this user");
 
+        const rank = userData.Ranks[group] - 1;
+        
+        if (!canRankUser(setterData.Ranks[group], userData.Ranks[group], group, rank)) {
+            await commandError(interaction, "You do not have valid permissions to set this rank to this user");
             return;
         }
 
         if (!userData.Ranks[group]) {
             await commandError(interaction, "Group not found");
-
             return;
         }
 
         if (userData.Ranks[group] === 0) {
             await commandError(interaction, `User is not in the ${group} group.`);
-
-            return;
-        }
-
-        if (userData.Ranks[group] === rank) {
-            await commandError(interaction, "User already has this rank");
-
             return;
         }
 
@@ -129,7 +109,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
             data: userData
         }
 
-        await setRank(setter, user, group, Number(rank));
+        await setRank(setter, user, group, rank);
 
         await interaction.editReply({
             embeds: [SuccessMessage("Command Success", "User rank updated")]
@@ -142,8 +122,8 @@ async function execute(interaction: ChatInputCommandInteraction) {
 }
 
 const commandData: CommandData = {
-    name: "setrank",
-    description: "Set a user's rank in a group",
+    name: "demote",
+    description: "Demote a user in a group",
     options: [
         {
             name: "group",
@@ -154,15 +134,8 @@ const commandData: CommandData = {
 
         {
             name: "user",
-            description: "The user to update",
+            description: "The user to demote",
             type: OptionType.USER,
-            required: true
-        },
-
-        {
-            name: "rank",
-            description: "The rank to set",
-            type: OptionType.NUMBER,
             required: true
         }
     ],

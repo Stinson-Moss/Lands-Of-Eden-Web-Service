@@ -1,6 +1,7 @@
 import Database from "./database";
-import Datastore from './Datastore';
+import Datastore from './datastore';
 import axios from 'axios';
+import Groups from "@data/groups.json";
 
 interface UserInfo {
     username: string;
@@ -67,7 +68,7 @@ async function getUserInfo(userId: string, type: UserIdType): Promise<UserInfo> 
     const playerData = await Datastore.GetEntry(`${robloxId}`);
 
     const groups = Object.entries(playerData.Persistent.Ranks)
-        .filter(([_, rank]) => (rank as number) > 0)
+        .filter(([groupName, rank]) => (rank as number) > 0 && !Groups[groupName as keyof typeof Groups].IsHidden)
         .map(([groupName]) => groupName);
     
     return {

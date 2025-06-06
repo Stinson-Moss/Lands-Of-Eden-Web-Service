@@ -1,12 +1,16 @@
-import DiscordClient from '@classes/discordclient';
 import { Router } from 'express';
-import { Guild } from 'discord.js';
+import { COOKIE_EXPIRATION } from '@utility/constants';
+import { Guild, Role, PermissionsBitField } from 'discord.js';
 import { verifySession } from '@utility/session';
 import { eq } from 'drizzle-orm';
-import { COOKIE_EXPIRATION } from '@utility/constants';
+import DiscordClient from '@classes/discordclient';
 import Database from '@classes/database';
 
 const router = Router();
+
+function canManageRole(botRole : Role, role: Role) {
+  return !role.managed && role.name !== '@everyone' && role.position < botRole.position && botRole.permissions.has(PermissionsBitField.Flags.ManageRoles);
+}
 
 router.get('/:serverId', async (req, res) => {
   const serverId = req.params.serverId;
@@ -38,7 +42,8 @@ router.get('/:serverId', async (req, res) => {
 
   }
 
-  const validRoles = server.roles.cache.filter(role => role.name !== '@everyone' && !role.managed).sort((a, b) => a.name.localeCompare(b.name));
+  const botRole : Role = server.members.me?.roles.cache.find(role => role.managed) as Role;
+  const validRoles = server.roles.cache.filter(role => canManageRole(botRole, role)).sort((a, b) => a.name.localeCompare(b.name));
   
   res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {
     httpOnly: true,

@@ -1,0 +1,216 @@
+// Process an invite to a group
+
+import { ChatInputCommandInteraction, GuildMember } from "discord.js";
+import { CommandData, Command, BuildCommand, OptionType } from "@/utility/command";
+import { ErrorMessage } from "@/embeds/errorMessage";
+import { SuccessMessage } from "@/embeds/successMessage";
+import axios from "axios";
+import Groups from "@data/groups.json";
+import Database from "@/classes/database";
+import Datastore from "@/classes/datastore";
+import MemoryStore from "@/classes/memorystore";
+import setRank from "@/utility/setrank";
+
+const usersUrl = `https://users.roblox.com/v1/usernames/users`
+
+const commandData: CommandData = {
+    name: "invite",
+    description: "Process an invite to a group",
+    subcommands: [
+        {
+            name: "accept",
+            description: "Accept an invite to a group",
+            options: [
+                {
+                    name: "group",
+                    description: "The group to accept the invite to",
+                    type: OptionType.STRING,
+                    required: true
+                },
+
+                {
+                    name: "user_roblox",
+                    description: "The roblox username/userid to accept the invite for",
+                    type: OptionType.STRING,
+                    required: false
+                },
+
+                {
+                    name: "user_discord",
+                    description: "The discord user to accept the invite for",
+                    type: OptionType.USER,
+                    required: false
+                }
+            ]
+        },
+
+        {
+            name: "reject",
+            description: "Reject an invite to a group",
+            options: [
+                {
+                    name: "group",
+                    description: "The group to reject the invite for",
+                    type: OptionType.STRING,
+                    required: true
+                },
+
+                {
+                    name: "user_roblox",
+                    description: "The roblox username/userid to reject the invite for",
+                    type: OptionType.STRING,
+                    required: false
+                },
+
+                {
+                    name: "user_discord",
+                    description: "The discord user to reject the invite for",
+                    type: OptionType.USER,
+                    required: false
+                }
+            ]
+        }
+    ]
+}
+
+async function error(interaction: ChatInputCommandInteraction, message: string) {
+    await interaction.editReply({
+        embeds: [ErrorMessage("Error", message)]
+    });
+}
+
+async function getInvite(robloxId: string, group: string) {
+    const sortedMap = MemoryStore.GetSortedMap(`${group}Requests`);
+    try {
+        const response = await sortedMap.getItem(robloxId);
+        return response ?? null;
+    } catch (error) {
+        return null;
+    }
+}
+
+async function execute(interaction: ChatInputCommandInteraction) {
+    await interaction.deferReply({ ephemeral: true });
+    const subCommand = interaction.options.getSubcommand();
+
+    const groupOption = interaction.options.getString("group");
+    const robloxOption = interaction.options.getString("user_roblox");
+    const discordOption = interaction.options.getMember("user_discord");
+
+    let robloxUser: { id: string | null, username: string | null } = {
+        id: null,
+        username: null
+    };
+
+    const groupData = Groups[groupOption as keyof typeof Groups];
+
+    if (!groupData) {
+        await error(interaction, "Group not found");
+        return;
+    }
+
+    if (groupData.IsPublic) {
+        await error(interaction, "Group is public, no invites are needed");
+        return;
+    }
+
+    if (!robloxOption && !discordOption) {
+        await error(interaction, "No user provided");
+        return;
+    }
+
+    try {
+        
+        const setterInfo = await Database.getUserByDiscord((interaction.member as GuildMember).id)
+        if (!setterInfo || !setterInfo.robloxId) {
+            await error(interaction, "You are not linked to a roblox account");
+            return;
+        }
+    
+        const setterData = await Datastore.GetEntry(setterInfo.robloxId);
+        if (!setterData) {
+            await error(interaction, "You have no data stored");
+            return;
+        }
+    
+        if (setterData.Ranks[groupOption as keyof typeof setterData.Ranks] < groupData.Classes.Command) {
+            await error(interaction, `You must be at least ${groupData.Ranks[groupData.Classes.Command.toString() as keyof typeof groupData.Ranks]} (${groupData.Classes.Command}) to process invites for the ${groupOption}`);
+            return;
+        }
+    
+        if (robloxOption) {
+            let robloxId = robloxOption.match(/^(\d+)$/)?.[0];
+            if (!robloxId) {
+                const robloxUsers = await axios.post(usersUrl, {
+                    usernames: [robloxOption],
+                    excludeBannedUsers: true
+                })
+    
+                if (robloxUsers.data.data.length === 0) {
+                    await error(interaction, "User not found");
+                    return;
+                }
+    
+                robloxId = robloxUsers.data.data[0].id;
+                robloxUser.id = robloxId as string;
+                // robloxUser.username = robloxUsers.data.data[0].name;
+            }
+        } else {
+            const userInfo = await Database.getUserByDiscord((discordOption as GuildMember).id)
+            if (!userInfo || !userInfo.robloxId) {
+                await error(interaction, "User is not linked to a roblox account");
+                return;
+            }
+            
+            robloxUser.id = userInfo.robloxId;
+        }
+    
+        const invite = await getInvite(robloxUser.id as string, groupOption as string);
+        if (!invite) {
+            await error(interaction, `User has no pending invites to ${groupOption}`);
+            return;
+        }
+    
+        const userData = await Datastore.GetEntry(robloxUser.id as string);
+        if (!userData) {
+            await error(interaction, "User has no data stored");
+            return;
+        }
+    
+        if (userData.Ranks[groupOption as keyof typeof userData.Ranks] > 0) {
+            await error(interaction, "User is already a member of the group");
+            return;
+        }
+    
+        await MemoryStore.GetSortedMap(`${groupOption}Requests`).deleteItem(robloxUser.id as string);
+        
+        if (subCommand === "accept") {
+            const setterUser = {
+                robloxId: setterInfo.robloxId,
+                data: setterData
+            }
+        
+            const targetUser = {
+                robloxId: robloxUser.id as string,
+                data: userData
+            }
+            
+            await setRank(setterUser, targetUser, groupOption as string, 1);
+            
+            await interaction.editReply({
+                embeds: [SuccessMessage("Success", `User has been accepted into ${groupOption}`)]
+            });
+        } else {
+            await interaction.editReply({
+                embeds: [SuccessMessage("Success", `User has been rejected from ${groupOption}`)]
+            });
+        }
+        
+    } catch (e) {
+        console.error(e);
+        await error(interaction, "Failed to process invite");
+        return;
+    }
+}
+
+module.exports = BuildCommand(commandData, execute);

@@ -108,7 +108,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
 }
 
 const commandData: CommandData = {
-    name: "updateTester",
+    name: "updatetester",
     description: "Update a user's rank in the Eden Group",
     options: [
         {

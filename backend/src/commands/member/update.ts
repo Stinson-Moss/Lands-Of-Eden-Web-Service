@@ -6,7 +6,7 @@ import { ErrorMessage } from "../../embeds/errorMessage";
 import { SuccessfulRolesUpdate } from "../../embeds/rolesUpdated";
 import { eq } from "drizzle-orm";
 import Database from "@classes/database";
-import Datastore from "@classes/Datastore";
+import Datastore from "@/classes/datastore";
 
 type BindingOperation = "=" | ">=" | "<=" | "between";
 interface Binding {
