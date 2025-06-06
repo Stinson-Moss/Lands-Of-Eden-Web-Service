@@ -3,7 +3,6 @@ import { ChatInputCommandInteraction, EmbedBuilder } from "discord.js";
 import { BuildCommand, CommandData, OptionType } from "@/utility/command";
 import { ErrorMessage } from "@/embeds/errorMessage";
 import groups from "@/data/groups.json";
-import Datastore from "@/classes/datastore";
 
 const commandData: CommandData = {
     name: "ranks",

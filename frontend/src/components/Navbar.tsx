@@ -20,7 +20,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser}) => {
             <span className="logoText">Lands of Eden</span>
           </Link>
           <Link to="/" className="navLink">Home</Link>
-          <Link to="/Dashboard" className='navLink'>Dashboard</Link>
+          {user?.discord && user.discord.id ? <Link to="/Dashboard" className='navLink'>Dashboard</Link> : null}
         </div>
         <div className="navRight">
           <LoginWidget user={user} setUser={setUser}/>

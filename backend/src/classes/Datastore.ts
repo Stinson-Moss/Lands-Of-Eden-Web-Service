@@ -1,43 +1,32 @@
-import axios from 'axios'
+import axios, { AxiosInstance } from 'axios'
 
 const universeId = process.env.ROBLOX_UNIVERSE_ID;
 const playerDatastore = process.env.ROBLOX_PLAYER_DATASTORE_NAME;
 const groupDatastore = process.env.ROBLOX_GROUP_DATASTORE_NAME;
 const groupApiKey = process.env.ROBLOX_GROUP_API_KEY;
 
-enum Mode {
-    PLAYER,
-    GROUP
-}
+class Store {
+    private instance : AxiosInstance;
+    private name : string;
 
-function datastore(mode : Mode) {
-    switch (mode) {
-        case Mode.PLAYER:
-            return `${playerDatastore}/entries`;
-        case Mode.GROUP:
-            return `${groupDatastore}/entries`;
+    constructor(datastoreName : string) {
+        this.name = datastoreName;
+        this.instance = axios.create({
+            baseURL: `https://apis.roblox.com/cloud/v2/universes/${universeId}/data-stores/${datastoreName}/entries/`,
+            headers: {
+                'x-api-key': groupApiKey,
+                'Content-Type': 'application/json'
+            }
+        })
     }
-}
 
-
-class Datastore {
-
-    static instance = axios.create({
-        baseURL: `https://apis.roblox.com/cloud/v2/universes/${universeId}/data-stores/`,
-        headers: {
-            'x-api-key': groupApiKey
-        }
-    })
-
-    static mode : Mode = Mode.PLAYER;
-    
-    static async GetEntry(key : string) {
+    async GetEntry(key : string) {
         
         try {
-            const response = await this.instance.get(`${datastore(this.mode)}/${key}`)
+            const response = await this.instance.get(key);
 
             if (response.status !== 200) {
-                throw new Error(`Failed to get the entry, '${key}' from datastore '${playerDatastore}'`)
+                throw new Error(`Failed to get the entry, '${key}' from datastore '${this.name}'`)
             }
 
             
@@ -47,13 +36,13 @@ class Datastore {
             return json;
         } catch (error) {
             console.log(error);
-            throw new Error(`Error getting entry '${key}' from datastore '${playerDatastore}'`);
+            throw new Error(`Error getting entry '${key}' from datastore '${this.name}'`);
         }
     }
     
-    static async ListEntries(maxPageSize : number, filter : string, showDeleted : boolean, token : string) {
+    async ListEntries(maxPageSize : number, filter : string, showDeleted : boolean, token : string) {
         try {
-            const response = await this.instance.get(`${datastore(this.mode)}`, {
+            const response = await this.instance.get(``, {
                 params: {
                     'maxPageSize': maxPageSize,
                     'filter': filter,
@@ -63,23 +52,23 @@ class Datastore {
             });
 
             if (response.status !== 200) {
-                throw new Error(`Failed to list entries from datastore '${datastore(this.mode)}'`)
+                throw new Error(`Failed to list entries from datastore '${this.name}'`)
             }
 
             return response.data;
         } catch (error) {
-            throw new Error(`Error listing entries from datastore '${datastore(this.mode)}'`);
+            throw new Error(`Error listing entries from datastore '${this.name}'`);
         }
     }
 
-    static async UpdateEntry(key : string, value : any, allowMissing = true) {
+    async UpdateEntry(key : string, value : any, allowMissing = true) {
         try {
 
-            if (!('etag' in value) || !('value' in value) || !('users' in value)) {
+            if (!('etag' in value) || !('value' in value)) {
                 throw new Error(`Invalid entry value: '${value}'`)
             }
 
-            const response = await this.instance.patch(`${datastore(this.mode)}/${key}`, {
+            const response = await this.instance.patch(key, {
                 params: {
                     'allowMissing': allowMissing
                 },
@@ -91,22 +80,21 @@ class Datastore {
             });
             
             if (response.status !== 200) {
-                throw new Error(`Failed to update entry '${key}' in datastore '${datastore(this.mode)}'`);
+                throw new Error(`Failed to update entry '${key}' in datastore '${this.name}'`);
             }
             
             return response.data;
         } catch (error) {
-            throw new Error(`Error updating entry '${key}' in datastore '${datastore(this.mode)}'`);
+            throw new Error(`Error updating entry '${key}' in datastore '${this.name}'`);
         }
     }
 
-
-    static async DeleteEntry(key : string) {
+    async DeleteEntry(key : string) {
         try {
-            const response = await this.instance.delete(`${datastore(this.mode)}/${key}`);
+            const response = await this.instance.delete(key);
 
             if (response.status !== 200) {
-                throw new Error(`Failed to delete entry: '${key}' from datastore: ${datastore(this.mode)}`)
+                throw new Error(`Failed to delete entry: '${key}' from datastore: ${this.name}`)
             }
 
             return response.data;            
@@ -114,6 +102,24 @@ class Datastore {
             throw error;
         }
     }
+
+} 
+
+
+class DatastoreServer {
+
+    private static stores : {[key : string] : Store} = {};
+
+    static GetDatastore(name : string) {
+        if (this.stores[name]) {
+            return this.stores[name];
+        }
+
+        const store = new Store(name);
+        this.stores[name] = store;
+
+        return store;
+    }
 }
 
-export default Datastore;
+export default DatastoreServer;

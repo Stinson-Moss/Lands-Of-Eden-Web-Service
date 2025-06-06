@@ -1,4 +1,4 @@
-import { Events, Interaction } from 'discord.js';
+import { Events, Interaction, MessageFlags } from 'discord.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -39,9 +39,7 @@ export = {
         //     return;
         // }
 
-        console.log('INTERACTION CREATE');
         if (!interaction.isChatInputCommand()) return;
-        console.log('INTERACTION CREATE 2');
         const command = interaction.client.commands.get(interaction.commandName)
     
         if (!command) {
@@ -55,9 +53,9 @@ export = {
             console.error(`Error executing ${interaction.commandName} command:`, error);
     
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+                await interaction.followUp({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
             } else {
-                await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+                await interaction.reply({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
             }
         }
         

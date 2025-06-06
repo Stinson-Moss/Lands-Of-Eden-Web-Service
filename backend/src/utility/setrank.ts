@@ -1,5 +1,5 @@
 import PlayerData from "@utility/playerData";
-import Datastore from "@/classes/datastore";
+import DatastoreServer from "@/classes/datastore";
 import axios from "axios";
 
 interface RobloxUser {
@@ -45,7 +45,7 @@ export default async function setRank(setter: RobloxUser, user: RobloxUser, grou
     } else {
         // update the datastore
         user.data.Ranks[group as keyof typeof user.data.Ranks] = targetRank;
-        const result = await Datastore.UpdateEntry(user.robloxId, user.data);
+        const result = await DatastoreServer.GetDatastore("PlayerDataManager").UpdateEntry(user.robloxId, user.data);
 
         return result;
     }

@@ -1,5 +1,5 @@
 import Database from "./database";
-import Datastore from './datastore';
+import DatastoreServer from './datastore';
 import axios from 'axios';
 import Groups from "@data/groups.json";
 
@@ -16,6 +16,8 @@ enum UserIdType {
     Discord = 1,
     Roblox = 2
 }
+
+const playerStore = DatastoreServer.GetDatastore("PlayerDataManager");
 
 async function getUserInfo(userId: string, type: UserIdType): Promise<UserInfo> {
 
@@ -65,10 +67,18 @@ async function getUserInfo(userId: string, type: UserIdType): Promise<UserInfo> 
     }
 
     // groups
-    const playerData = await Datastore.GetEntry(`${robloxId}`);
+    const playerData = await playerStore?.GetEntry(robloxId as string);
+
+    if (!playerData) {
+        throw new Error("Player data not found");
+    }
+
 
     const groups = Object.entries(playerData.Persistent.Ranks)
-        .filter(([groupName, rank]) => (rank as number) > 0 && !Groups[groupName as keyof typeof Groups].IsHidden)
+        .filter(([groupName, rank]) => {
+            const group = Groups[groupName as keyof typeof Groups];
+            return group && (rank as number) > 0 && !group.IsHidden;
+        })
         .map(([groupName]) => groupName);
     
     return {

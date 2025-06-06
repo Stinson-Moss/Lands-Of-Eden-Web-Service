@@ -1,13 +1,13 @@
 // Process an invite to a group
 
-import { ChatInputCommandInteraction, GuildMember } from "discord.js";
+import { ChatInputCommandInteraction, GuildMember, MessageFlags } from "discord.js";
 import { CommandData, Command, BuildCommand, OptionType } from "@/utility/command";
 import { ErrorMessage } from "@/embeds/errorMessage";
 import { SuccessMessage } from "@/embeds/successMessage";
 import axios from "axios";
 import Groups from "@data/groups.json";
 import Database from "@/classes/database";
-import Datastore from "@/classes/datastore";
+import DatastoreServer from "@/classes/datastore";
 import MemoryStore from "@/classes/memorystore";
 import setRank from "@/utility/setrank";
 
@@ -90,7 +90,7 @@ async function getInvite(robloxId: string, group: string) {
 }
 
 async function execute(interaction: ChatInputCommandInteraction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const subCommand = interaction.options.getSubcommand();
 
     const groupOption = interaction.options.getString("group");
@@ -127,7 +127,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
             return;
         }
     
-        const setterData = await Datastore.GetEntry(setterInfo.robloxId);
+        const setterData = await DatastoreServer.GetDatastore("PlayerDataManager").GetEntry(setterInfo.robloxId);
         if (!setterData) {
             await error(interaction, "You have no data stored");
             return;
@@ -171,7 +171,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
             return;
         }
     
-        const userData = await Datastore.GetEntry(robloxUser.id as string);
+        const userData = await DatastoreServer.GetDatastore("PlayerDataManager").GetEntry(robloxUser.id as string);
         if (!userData) {
             await error(interaction, "User has no data stored");
             return;

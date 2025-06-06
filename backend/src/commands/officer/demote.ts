@@ -1,11 +1,11 @@
 // Admin command: Update Tester roles
 
-import { ChatInputCommandInteraction, GuildMember, GuildMemberRoleManager, PermissionsBitField } from "discord.js";
+import { ChatInputCommandInteraction, GuildMember, MessageFlags, PermissionsBitField } from "discord.js";
 import { Command, BuildCommand, OptionType, CommandData } from "@/utility/command";
 import { ErrorMessage } from "@/embeds/errorMessage";
 import { SuccessMessage } from "@/embeds/successMessage";
 import Database from "@/classes/database";
-import Datastore from "@/classes/datastore";
+import DatastoreServer from "@/classes/datastore";
 import PlayerData from "@utility/playerData"
 import Groups from "@data/groups.json"
 import setRank from "@/utility/setrank";
@@ -20,7 +20,7 @@ async function commandError(interaction: ChatInputCommandInteraction, message: s
 }   
 
 async function execute(interaction: ChatInputCommandInteraction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const rankSetter = interaction.member;
     const discordUser = interaction.options.getMember("user");
@@ -68,14 +68,14 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
     try {
         
-        const setterData : PlayerData = await Datastore.GetEntry(setterInfo.robloxId);
+        const setterData : PlayerData = await DatastoreServer.GetDatastore("PlayerDataManager").GetEntry(setterInfo.robloxId);
 
         if (!setterData) {
             await commandError(interaction, "You have no data stored");
             return;
         }
         
-        const userData : PlayerData = await Datastore.GetEntry(userInfo.robloxId);
+        const userData : PlayerData = await DatastoreServer.GetDatastore("PlayerDataManager").GetEntry(userInfo.robloxId);
         
         if (!userData) {
             await commandError(interaction, "User has no data");

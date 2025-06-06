@@ -8,6 +8,7 @@ dotenv.config();
 
 const clientId = process.env.DISCORD_CLIENT_ID;
 const devGuildId = process.env.DISCORD_DEV_GUILD_ID;
+const architectsGuildId = process.env.DISCORD_ARCHITECTS_GUILD_ID;
 const token = process.env.DISCORD_TOKEN;
 
 // console.log('DEV GUILD ID: ', process.env);
@@ -41,6 +42,11 @@ const rest = new REST().setToken(token as string);
 
         const data = await rest.put(
             Routes.applicationGuildCommands(clientId as string, devGuildId as string),
+            { body: commands }
+        );
+
+        await rest.put(
+            Routes.applicationGuildCommands(clientId as string, architectsGuildId as string),
             { body: commands }
         );
 

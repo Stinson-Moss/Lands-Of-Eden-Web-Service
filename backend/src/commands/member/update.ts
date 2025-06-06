@@ -1,12 +1,12 @@
 // Member command: Update roles based on current group ranks 
 
-import { ChatInputCommandInteraction, PermissionsBitField, GuildMemberRoleManager, GuildMember } from "discord.js";
+import { ChatInputCommandInteraction, PermissionsBitField, GuildMemberRoleManager, GuildMember, MessageFlags } from "discord.js";
 import { Command, BuildCommand, OptionType, OptionData, CommandData } from "../../utility/command";
 import { ErrorMessage } from "../../embeds/errorMessage";
 import { SuccessfulRolesUpdate } from "../../embeds/rolesUpdated";
 import { eq } from "drizzle-orm";
 import Database from "@classes/database";
-import Datastore from "@/classes/datastore";
+import DatastoreServer from "@/classes/datastore";
 
 type BindingOperation = "=" | ">=" | "<=" | "between";
 interface Binding {
@@ -37,12 +37,11 @@ async function execute(interaction: ChatInputCommandInteraction) {
     const interactionMember = interaction.member;
     let targetMember : GuildMember = interaction.member as GuildMember;
 
-    await interaction.deferReply({ephemeral: true});
+    await interaction.deferReply({flags: MessageFlags.Ephemeral});
 
     if (member) {
 
         const permissions = interactionMember?.permissions as PermissionsBitField;
-        const roles = interactionMember?.roles as GuildMemberRoleManager;
         
         if (!permissions.has(PermissionsBitField.Flags.Administrator)) {
             await interaction.reply({
@@ -82,7 +81,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
         return;
     }
 
-    const groupData = await Datastore.GetEntry(memberRobloxId);
+    const groupData = await DatastoreServer.GetDatastore("PlayerDataManager").GetEntry(memberRobloxId);
 
     if (!groupData) {
         await interaction.editReply({

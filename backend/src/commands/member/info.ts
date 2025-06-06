@@ -1,13 +1,13 @@
 // Member command: Get user information 
 
-import { ChatInputCommandInteraction, GuildMember, GuildMemberRoleManager } from "discord.js";
+import { ChatInputCommandInteraction, GuildMember, GuildMemberRoleManager, MessageFlags } from "discord.js";
 import { Command, BuildCommand, OptionType, CommandData } from "@/utility/command";
 import { ErrorMessage } from "@/embeds/errorMessage";
 import { UserInfoEmbed } from "@/embeds/userInfo";
-import { getUserInfo, UserIdType } from "@/classes/getRobloxUserInfo";
+import { getUserInfo, UserIdType, UserInfo } from "@/classes/getRobloxUserInfo";
 
 async function execute(interaction: ChatInputCommandInteraction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const discordUser = interaction.options.getMember("user_discord");
     const robloxUser = interaction.options.getString("user_roblox");
@@ -41,22 +41,32 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
     }
 
-    if (discordUser) {
-        if (!((discordUser.roles as GuildMemberRoleManager).cache.has(process.env.ROLE_LINKED as string))) {
-            await interaction.editReply({
-                embeds: [ErrorMessage(
-                    "Not Found",
-                    "User does not have a linked roblox account"
-                )]
-            });
+    // if (discordUser) {
+    //     if (!((discordUser.roles as GuildMemberRoleManager).cache.has(process.env.ROLE_LINKED as string))) {
+    //         await interaction.editReply({
+    //             embeds: [ErrorMessage(
+    //                 "Not Found",
+    //                 "User does not have a linked roblox account"
+    //             )]
+    //         });
 
-            return;
-        }
+    //         return;
+    //     }
+    // }
+
+    let userInfo: UserInfo;
+    try {
+        userInfo = await getUserInfo(userId, type);
+        console.log('UserInfo:', userInfo);
+    } catch (error) {
+        console.error(error);
+        await interaction.editReply({
+            embeds: [ErrorMessage("Command Error", "User not found")]
+        });
+        return;
     }
     
     try {
-        const userInfo = await getUserInfo(userId, type);
-        console.log('UserInfo:', userInfo);
         const embed = await UserInfoEmbed(userInfo);
 
         await interaction.editReply({
