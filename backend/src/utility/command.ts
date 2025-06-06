@@ -23,6 +23,7 @@ interface CommandData {
     options?: any[];
     subcommands?: CommandData[];
     permissions?: bigint;
+    cooldown?: number;
 }
 
 interface OptionData {

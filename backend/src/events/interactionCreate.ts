@@ -1,4 +1,5 @@
-import { Events, Interaction, MessageFlags } from 'discord.js';
+import { ErrorMessage } from '@/embeds/errorMessage';
+import { Events, GuildMember, Interaction, MessageFlags } from 'discord.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -17,6 +18,8 @@ import path from 'node:path';
 //         }
 //     }
 // }
+
+const cooldowns = new Map<string, Map<string, number>>();
 
 export = {
     name: Events.InteractionCreate,
@@ -40,11 +43,38 @@ export = {
         // }
 
         if (!interaction.isChatInputCommand()) return;
+
         const command = interaction.client.commands.get(interaction.commandName)
     
         if (!command) {
             console.error(`No command matching ${interaction.commandName} was found.`);
             return;
+        }
+
+        if (command.cooldown) {
+            const member = interaction.member as GuildMember;
+
+            if (!cooldowns.has(interaction.commandName)) {
+                cooldowns.set(interaction.commandName, new Map());
+            }
+
+            const map = cooldowns.get(interaction.commandName) as Map<string, number>;
+            const timeStamp = map.get(member.id) ?? null;
+
+            if (timeStamp) {
+                const nowSeconds = Math.floor(Date.now() / 1000);
+                const timeLeft = timeStamp - nowSeconds;
+
+                if (timeLeft > 0) {
+                    interaction.reply({
+                        embeds: [ErrorMessage("Cooldown", `You are on cooldown. Please wait ${timeLeft} seconds before using this command again.`)]
+                    })
+                    return;
+                }
+            }
+
+            map.set(member.id, Math.floor(Date.now() / 1000) + command.cooldown);
+            setTimeout(() => map.delete(member.id), command.cooldown * 1000);
         }
     
         try {

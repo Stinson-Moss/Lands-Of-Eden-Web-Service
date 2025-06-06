@@ -4,7 +4,8 @@ import { CommandData, Command, BuildCommand } from '../../utility/command'
 const commandData: CommandData = {
     name: "verify",
     description: "Verify the user with their roblox account",
-    options: []
+    options: [],
+    cooldown: 5
 }
 
 async function execute(interaction: ChatInputCommandInteraction) {

@@ -14,7 +14,9 @@ const commandData: CommandData = {
             type: OptionType.STRING,
             required: true
         }
-    ]
+    ],
+
+    cooldown: 5
 }
 
 async function execute(interaction: ChatInputCommandInteraction) {

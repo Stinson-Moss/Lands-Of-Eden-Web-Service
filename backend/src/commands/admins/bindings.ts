@@ -6,7 +6,8 @@ const commandData: CommandData = {
     name: "bindings",
     description: "Go to the binding dashboard",
     options: [],
-    permissions: PermissionsBitField.Flags.Administrator
+    permissions: PermissionsBitField.Flags.Administrator,
+    cooldown: 5
 }
 
 async function execute(interaction: ChatInputCommandInteraction) {

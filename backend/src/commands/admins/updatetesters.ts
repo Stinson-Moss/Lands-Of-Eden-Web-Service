@@ -43,7 +43,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
             allowedMentions: {
                 users: []
             },
-            
+
             embeds: [SuccessMessage("Command Success", `Permission whitelist updated. ${invalidTesters.length > 0 && `Some testers were unable to be added to the whitelist due to not having a linked roblox account.`}`).addFields(
                 {
                     name: "Valid Testers",
@@ -76,6 +76,7 @@ const commandData: CommandData = {
         }
     ],
 
+    cooldown: 30,
     permissions: PermissionsBitField.Flags.Administrator
 }
 

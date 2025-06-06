@@ -70,7 +70,9 @@ const commandData: CommandData = {
                 }
             ]
         }
-    ]
+    ],
+
+    cooldown: 5
 }
 
 async function error(interaction: ChatInputCommandInteraction, message: string) {

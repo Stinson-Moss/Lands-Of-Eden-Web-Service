@@ -138,6 +138,7 @@ const commandData: CommandData = {
         }
     ],
 
+    cooldown: 5,
     permissions: PermissionsBitField.Flags.Administrator
 }
 

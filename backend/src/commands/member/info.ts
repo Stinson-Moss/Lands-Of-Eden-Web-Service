@@ -100,7 +100,9 @@ const commandData: CommandData = {
             type: OptionType.STRING,
             required: false
         }
-    ]
+    ],
+
+    cooldown: 10
 }
 
 const command: Command = BuildCommand(commandData, execute);
