@@ -6,3 +6,6 @@ ca.pem
 references
 dist
 scripts
+
+# JS scripts
+*.js
