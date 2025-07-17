@@ -1,8 +1,10 @@
+// datastore.ts
+// Handles in-memory data storage and retrieval for the backend, providing a simple key-value store abstraction for temporary or session-based data.
 import axios, { AxiosInstance } from 'axios'
 
 const universeId = process.env.ROBLOX_UNIVERSE_ID;
-const playerDatastore = process.env.ROBLOX_PLAYER_DATASTORE_NAME;
-const groupDatastore = process.env.ROBLOX_GROUP_DATASTORE_NAME;
+// const playerDatastore = process.env.ROBLOX_PLAYER_DATASTORE_NAME;
+// const groupDatastore = process.env.ROBLOX_GROUP_DATASTORE_NAME;
 const groupApiKey = process.env.ROBLOX_GROUP_API_KEY;
 
 class Store {

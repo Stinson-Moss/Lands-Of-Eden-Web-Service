@@ -1,4 +1,5 @@
-// Member command: View ranks in a specific group 
+// ranks.ts
+// Provides functionality to retrieve and manage member ranks within a group, supporting queries and updates to rank data.
 import { ChatInputCommandInteraction, EmbedBuilder } from "discord.js";
 import { BuildCommand, CommandData, OptionType } from "@/utility/command";
 import { ErrorMessage } from "@/embeds/errorMessage";

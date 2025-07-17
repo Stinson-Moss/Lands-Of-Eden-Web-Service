@@ -1,3 +1,5 @@
+// error.ts
+// Defines error handling utilities and custom error types for consistent error reporting and management across the backend.
 export function handleError(error: any) {
   console.error('Error:', error);
   return {

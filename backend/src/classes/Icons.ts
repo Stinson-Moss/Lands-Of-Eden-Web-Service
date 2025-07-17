@@ -1,3 +1,5 @@
+// Icons.ts
+// Exports icon assets or icon-related utilities for use in the backend, such as for embeds or UI representations.
 const url = 'https://thumbnails.roblox.com/v1/assets/?assetIds=%s&format=webp&size=150x150';
 
 class Icons {

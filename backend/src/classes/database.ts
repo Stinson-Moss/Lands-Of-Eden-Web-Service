@@ -1,3 +1,5 @@
+// database.ts
+// Provides database connection and query utilities for interacting with the backend's persistent data store.
 import { drizzle } from "drizzle-orm/node-postgres"
 import { eq } from "drizzle-orm"
 import { users, bindings} from "../db/schema";

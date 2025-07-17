@@ -1,3 +1,5 @@
+// command.ts
+// Provides utility functions and types for building, registering, and handling Discord bot commands, including validation and permission checks.
 import {ChatInputCommandInteraction, PermissionsBitField, SlashCommandBuilder, SlashCommandSubcommandBuilder } from 'discord.js';
 
 enum OptionType {

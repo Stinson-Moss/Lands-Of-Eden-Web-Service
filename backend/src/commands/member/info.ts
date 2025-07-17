@@ -1,4 +1,5 @@
-// Member command: Get user information 
+// info.ts
+// Retrieves and displays detailed information about a member, such as their roles, status, and linked accounts.
 
 import { ChatInputCommandInteraction, GuildMember, GuildMemberRoleManager, MessageFlags } from "discord.js";
 import { Command, BuildCommand, OptionType, CommandData } from "@/utility/command";

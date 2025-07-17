@@ -1,4 +1,5 @@
-// Member command: Update roles based on current group ranks 
+// update.ts
+// Handles the logic for updating a member's information or roles within a group or community, including permission checks and data synchronization.
 
 import { ChatInputCommandInteraction, PermissionsBitField, GuildMemberRoleManager, GuildMember, MessageFlags } from "discord.js";
 import { Command, BuildCommand, OptionType, OptionData, CommandData } from "../../utility/command";

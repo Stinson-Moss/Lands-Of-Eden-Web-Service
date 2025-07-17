@@ -1,3 +1,5 @@
+// discord.ts
+// Provides utility functions for interacting with the Discord API, such as sending messages, managing roles, or formatting data.
 import axios from 'axios';
 import { Guild, PermissionsBitField } from 'discord.js';
 import DiscordClient from '@classes/discordclient';

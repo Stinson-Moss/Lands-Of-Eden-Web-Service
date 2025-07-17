@@ -1,3 +1,5 @@
+// verify.ts
+// Implements the verification process for members, ensuring their accounts or roles meet required criteria for group participation.
 import { ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { CommandData, Command, BuildCommand } from '../../utility/command'
 

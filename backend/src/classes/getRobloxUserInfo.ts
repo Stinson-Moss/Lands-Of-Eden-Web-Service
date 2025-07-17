@@ -1,3 +1,5 @@
+// getRobloxUserInfo.ts
+// Contains functions to fetch and process Roblox user information, typically used for account linking and verification.
 import Database from "./database";
 import DatastoreServer from './datastore';
 import axios from 'axios';

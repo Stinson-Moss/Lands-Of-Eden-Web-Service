@@ -1,3 +1,5 @@
+// memorystore.ts
+// Implements a memory-based storage system for caching or temporary data, supporting fast access and expiration logic.
 import axios, { AxiosInstance } from 'axios'
 import { groupCollapsed } from 'console';
 

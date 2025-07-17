@@ -1,3 +1,5 @@
+// setrank.ts
+// Contains logic for setting or updating a user's rank within a group, including permission and validation checks.
 import PlayerData from "@utility/playerData";
 import DatastoreServer from "@/classes/datastore";
 import axios from "axios";

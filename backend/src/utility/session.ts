@@ -1,3 +1,5 @@
+// session.ts
+// Manages user session logic, including creation, validation, and destruction of session data for authentication and authorization.
 import crypto from 'crypto';
 import Database from '@classes/database';
 import { SESSION_EXPIRATION } from './constants';

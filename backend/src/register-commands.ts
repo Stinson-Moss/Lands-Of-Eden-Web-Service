@@ -11,8 +11,6 @@ const devGuildId = process.env.DISCORD_DEV_GUILD_ID;
 const architectsGuildId = process.env.DISCORD_ARCHITECTS_GUILD_ID;
 const token = process.env.DISCORD_TOKEN;
 
-// console.log('DEV GUILD ID: ', process.env);
-
 const commands: SlashCommandBuilder[] = [];
 const commandsFolderPath = path.join(process.cwd(), 'src/commands').toString();
 const commandFolders = fs.readdirSync(commandsFolderPath);

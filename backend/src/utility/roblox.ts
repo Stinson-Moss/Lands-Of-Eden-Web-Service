@@ -1,3 +1,5 @@
+// roblox.ts
+// Provides utility functions for interacting with the Roblox API, such as fetching user data or managing group roles.
 import axios from 'axios';
 import groups from '@data/groups.json';
 
