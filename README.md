@@ -27,6 +27,8 @@ The Eden Game Website solves this by providing the necessary infrastructure to b
 
 With Eden, onboarding is fast and accessible, community leaders can manage groups from anywhere, and players enjoy a seamless, cross-platform experience. Eden breaks down platform barriers, making it easy for everyone to join, participate, and thrive.
 
+### Other use cases
+Our current infrastructure relies on Roblox's Community feature, which is not compatible with our new infrastructure because Communities have been moved to be handled inside the game itself. That means that, without the Eden Web Service, players will have to go in-game to to community-handling stuff that they previously could do on the roblox website. The Eden Web service will also be taking up this responsibility via 2 avenues. Adam, our discord bot, and the Eden Website. Players can set the ranks of their members in their in-game groups through discord commands, or through a group rank management panel.
 ---
 
 ## Quick Facts
