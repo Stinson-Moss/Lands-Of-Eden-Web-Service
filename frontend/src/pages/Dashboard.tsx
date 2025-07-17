@@ -159,7 +159,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   };
 
   // Handle binding update
-  const handleUpdateBinding = (bindingId: string, rank: number, roles: string[], operator: ComparisonOperator, secondaryRank?: number) => {
+  const handleUpdateBinding = (bindingId: string | number, rank: number, roles: string[], operator: ComparisonOperator, secondaryRank?: number) => {
     console.log("New roles", roles);
     setBindings(bindings.map(binding => 
       binding.id === bindingId ? { 

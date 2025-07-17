@@ -44,7 +44,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
         const permissions = interactionMember?.permissions as PermissionsBitField;
         
         if (!permissions.has(PermissionsBitField.Flags.Administrator)) {
-            await interaction.reply({
+            await interaction.editReply({
                 embeds: [ErrorMessage(
                     "Command Error",
                     "You do not have permission to use this command on other members"

@@ -1,6 +1,6 @@
-import Group from '../../../types/Group';
-import RankBinding, { ComparisonOperator } from '../../../types/RankBinding';
-import Server from '../../../types/Server';
+import Group from '../../types/Group';
+import RankBinding, { ComparisonOperator } from '../../types/RankBinding';
+import Server from '../../types/Server';
 
 export interface RankRoleBindingsProps {
   groups: Group[];
@@ -26,8 +26,8 @@ export interface BindingGroupProps {
 
 export interface BindingRowProps {
   binding: RankBinding;
-  onUpdateBinding: (bindingId: string, rank: number, roles: string[], operator: ComparisonOperator, secondaryRank?: number) => void;
-  onRemoveBinding: (bindingId: string) => void;
+  onUpdateBinding: (bindingId: string | number, rank: number, roles: string[], operator: ComparisonOperator, secondaryRank?: number) => void;
+  onRemoveBinding: (bindingId: string | number) => void;
   activeServer: Server | null;
   activeGroup: Group | null;
 }

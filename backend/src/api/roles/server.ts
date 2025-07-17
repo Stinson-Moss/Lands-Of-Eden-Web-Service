@@ -42,7 +42,7 @@ router.get('/:serverId', async (req, res) => {
 
   }
 
-  const botRole : Role = server.members.me?.roles.cache.find(role => role.managed) as Role;
+  const botRole : Role = server.members.me?.roles.highest as Role;
   const validRoles = server.roles.cache.filter(role => canManageRole(botRole, role)).sort((a, b) => a.name.localeCompare(b.name));
   
   res.cookie('session', JSON.stringify({token: sessionResponse.data.token, refreshToken: sessionResponse.data.refreshToken}), {

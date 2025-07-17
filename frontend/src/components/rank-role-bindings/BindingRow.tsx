@@ -1,5 +1,6 @@
 import React from 'react';
 import { BindingRowProps, OPERATORS } from './types';
+import { ComparisonOperator } from '../../types/RankBinding';
 
 
 const BindingRow: React.FC<BindingRowProps> = ({
@@ -142,7 +143,7 @@ const BindingRow: React.FC<BindingRowProps> = ({
           onChange={handleUpdateRoles}
         >
           {activeServer?.roles
-            .sort((a, b) => b.position - a.position)
+            .sort((a, b) => a.name.localeCompare(b.name))
             .map(role => (
               <option 
                 key={role.id} 

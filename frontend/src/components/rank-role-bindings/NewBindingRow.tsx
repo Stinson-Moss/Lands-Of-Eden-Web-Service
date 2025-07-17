@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NewBindingRowProps, OPERATORS } from './types';
+import { ComparisonOperator } from '../../types/RankBinding';
 
 const NewBindingRow: React.FC<NewBindingRowProps> = ({
   groupName,
@@ -112,7 +113,7 @@ const NewBindingRow: React.FC<NewBindingRowProps> = ({
             <option value="0">Select Rank</option>
             {Object.entries(activeGroup?.Ranks || {}).map(([rank, name]) => (
               <option key={rank} value={rank}>
-                {rank}. {name}
+                {rank}. {name as string}
               </option>
             ))}
           </select>
@@ -128,7 +129,7 @@ const NewBindingRow: React.FC<NewBindingRowProps> = ({
                 <option value="0">Select Rank</option>
                 {Object.entries(activeGroup?.Ranks || {}).map(([rank, name]) => (
                   <option key={rank} value={rank}>
-                    {rank}. {name}
+                    {rank}. {name as string}
                   </option>
                 ))}
               </select>
@@ -160,8 +161,8 @@ const NewBindingRow: React.FC<NewBindingRowProps> = ({
           onChange={handleRoleChange}
         >
           {activeServer?.roles
-            .sort((a, b) => b.position - a.position)
-            .map(role => (
+            .sort((a: any, b: any) => b.position - a.position)
+            .map((role: any) => (
               <option 
                 key={role.id} 
                 value={role.id}

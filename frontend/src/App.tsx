@@ -1,3 +1,5 @@
+// App.tsx
+// This is the main entry point for the React frontend application. It sets up the router, manages global user authentication state, and renders the main navigation and page components (Home, Dashboard). It also handles OAuth authentication logic and user session retrieval from the backend.
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -23,11 +25,7 @@ const App: React.FC = () => {
       console.log('STATE:', state)
       
       if (code && (!csrf || !domain || csrf !== Tokens.getCsrf())) {
-        console.log('Invalid code or CSRF token')
-        console.log(csrf, Tokens.getCsrf())
-        // code = null;
-        // domain = '';
-
+        // validate csrf
       }
       
       window.history.replaceState({}, '', window.location.pathname);

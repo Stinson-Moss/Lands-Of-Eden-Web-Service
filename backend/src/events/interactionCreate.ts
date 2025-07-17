@@ -1,5 +1,5 @@
 import { ErrorMessage } from '@/embeds/errorMessage';
-import { Events, GuildMember, Interaction, MessageFlags } from 'discord.js';
+import { ChatInputCommandInteraction, Events, GuildMember, Interaction, MessageFlags } from 'discord.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -20,6 +20,14 @@ import path from 'node:path';
 // }
 
 const cooldowns = new Map<string, Map<string, number>>();
+
+async function reply(interaction: ChatInputCommandInteraction, content: string, flags: MessageFlags) {
+    if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({ content, flags: flags as any });
+    } else {
+        await interaction.reply({ content, flags: flags as any });
+    }
+}
 
 export = {
     name: Events.InteractionCreate,
@@ -66,9 +74,8 @@ export = {
                 const timeLeft = timeStamp - nowSeconds;
 
                 if (timeLeft > 0) {
-                    interaction.reply({
-                        embeds: [ErrorMessage("Cooldown", `You are on cooldown. Please wait ${timeLeft} seconds before using this command again.`)]
-                    })
+                    await reply(interaction, `You are on cooldown. Please wait ${timeLeft} seconds before using this command again.`, MessageFlags.Ephemeral);
+
                     return;
                 }
             }
@@ -81,12 +88,7 @@ export = {
             await command.execute(interaction);
         } catch (error) {
             console.error(`Error executing ${interaction.commandName} command:`, error);
-    
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
-            } else {
-                await interaction.reply({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
-            }
+            await reply(interaction, 'There was an error while executing this command!', MessageFlags.Ephemeral);
         }
         
     }
