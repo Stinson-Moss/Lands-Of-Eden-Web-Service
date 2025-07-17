@@ -6,16 +6,32 @@
 ![Eden Logo](frontend/src/assets/eden.svg)
 
 ## Table of Contents
+- [Project Purpose](#-why-eden)
 - [Features](#-features)
 - [Technical Implementation](#️-technical-implementation)
 - [Architecture Flow](#-architecture-flow)
 - [Performance](#-performance)
 - [Key Achievements](#-key-achievements)
-- [Project Purpose](#-why-eden)
+
+## 🌟 Why Eden?
+
+Many new players join our game, play briefly, and leave—often because essential content is locked behind joining a faction, which requires joining a Discord server and speaking to a community leader. This process is especially difficult for non-English speakers, creating a barrier to entry and limiting our community's growth.
+
+The Eden Game Website solves this by providing the necessary infrastructure to bring community features directly to the player, wherever they are:
+
+- Players can link their roblox accounts to their discord accounts, and make roblox actions without having to be in-game.
+
+- Players can join factions and access content with a single click, no matter their language or location.
+- The web service localizes content and removes the need for manual approval or Discord-only onboarding.
+- Community management is unified across in-game, Discord, and web platforms.
+
+With Eden, onboarding is fast and accessible, community leaders can manage groups from anywhere, and players enjoy a seamless, cross-platform experience. Eden breaks down platform barriers, making it easy for everyone to join, participate, and thrive.
+
+---
 
 ## Quick Facts
 - **Status**: In development
-- **Primary Technologies**: React, TypeScript, Node.js, Express, MySQL
+- **Primary Technologies**: React, TypeScript, Node.js, Express, PostgreSQL
 - **Target Platforms**: Discord, Roblox
 - **Main Purpose**: Cross-platform identity management for gaming communities
 
@@ -32,7 +48,7 @@
 - [ ] CSRF Protection (in development)
 - [ ] Rate limiting (planned)
 - [ ] Group management dashboard
-- [ ] Discord Server settings panel
+- [x] Discord Server settings panel
 
 ### User Interface
 - [x] Modern, responsive dark-themed design
@@ -45,7 +61,7 @@
 - [ ] Mobile-responsive design improvements (in progress)
 
 ### Backend Architecture
-- [x] Optimized MySQL database with normalized schema design
+- [x] Optimized PostgreSQL database with normalized schema design
 - [x] Connection pooling for efficient database management
 - [x] SSL-encrypted database connections with CA certificates
 - [x] Environment variable isolation for secure credential management
@@ -65,7 +81,7 @@
 
 ### Backend
 - **Server**: Node.js with Express for REST API endpoints
-- **Database**: MySQL with optimized schema for user identity mapping
+- **Database**: PostgreSQL with optimized schema for user identity mapping
 - **Security**: 
   - Cryptographic hashing for secure token generation
   - HttpOnly cookies to prevent XSS attacks
@@ -97,18 +113,5 @@
 - Developed an intuitive UI for managing cross-platform identities
 - Established secure session management with proper encryption and cookie handling
 - Built with scalability in mind to handle growing user base
-
-## 🌟 Why Eden?
-
-Eden bridges the gap between gaming platforms and community management. For our Roblox game, we wanted to create a seamless community experience that extends beyond the game itself. With Eden:
-
-- Players can manage their communities from anywhere - in-game, on Discord, or via our website
-- Community leaders experience minimal friction when organizing their groups
-- The cross-platform identity system ensures consistent user experience across all touchpoints
-- Communities thrive with tools that work wherever our players are
-
-Eden eliminates the traditional boundaries between platforms, creating a unified community management system that follows players wherever they go.
-
----
 
 ***This project is still in development.*** 
