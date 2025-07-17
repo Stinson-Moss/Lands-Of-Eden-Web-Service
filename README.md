@@ -33,7 +33,7 @@ With Eden, onboarding is fast and accessible, community leaders can manage group
 - **Status**: In development
 - **Primary Technologies**: React, TypeScript, Node.js, Express, PostgreSQL
 - **Target Platforms**: Discord, Roblox
-- **Main Purpose**: Cross-platform identity management for gaming communities
+- **Main Purpose**: Cross-platform identity management for Lands of Eden Gaming Communities
 
 ## 🚀 Features
 
